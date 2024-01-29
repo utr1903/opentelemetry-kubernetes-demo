@@ -1,10 +1,14 @@
 # Azure
 
-## Setting up baseline
+## 01 - Setting up baseline
 
 For automating Azure Kubernetes Service (AKS) deployment and start/stop, we will be using Github workflows and Terraform. In order for Github workflow to deploy anything on our Azure account, it requires access rights for which we will be using an Azure service principal. Moreover, the Terraform deployment requires to store the state of the deployment and for that we will be needing a blob container in a storage account.
 
 This pre-setup is called the baseline and can be prepared with the script [`00_create_baseline_resources.sh`](/infra/cluster/azure/scripts/00_create_baseline_resources.sh). It is important to note that this script should be run by a user (or a sevice principal) who has `Owner` rights on the subscription level!
+
+```shell
+bash 00_create_baseline_resources.sh --project myproj --instance 001 --location westeurope
+```
 
 The following Azure resources will be deployed:
 
@@ -12,3 +16,13 @@ The following Azure resources will be deployed:
 2. Key vault (to store service principal credentials)
 3. Storage account & blob container (to store Terraform state)
 4. Service principal (to run Github workflows)
+
+## 02 - Provisioning cluster
+
+After the baseline components are created, the cluster and it's relevant resources can be provisioned. In order to do that, run the script [`01_deploy_cluster.sh`](/infra/cluster/azure/scripts/01_deploy_cluster.sh).
+
+```shell
+bash 01_deploy_cluster.sh  --project myproj --instance 001 --location westeurope --k8s-version 1.27.1
+```
+
+**IMPORTANT**: The `project`, `instance` and `location` should be the same as the ones in the baseline!
