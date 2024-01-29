@@ -3,10 +3,6 @@
 # Get commandline arguments
 while (( "$#" )); do
   case "$1" in
-    --owner)
-      owner="${2}"
-      shift
-      ;;
     --project)
       project="${2}"
       shift
@@ -27,12 +23,6 @@ done
 
 ### Check input
 
-# Owner
-if [[ $owner == "" ]]; then
-  echo -e "Owner [--owner] is not provided!\n"
-  exit 1
-fi
-
 # Project
 if [[ $project == "" ]]; then
   echo -e "Project [--project] is not provided!\n"
@@ -52,11 +42,11 @@ if [[ $location == "" ]]; then
 fi
 
 ### Set variables
-resourceGroupName="rg${owner}${project}${instance}"
-keyVaultName="kv${owner}${project}${instance}"
-storageAccountName="st${owner}${project}${instance}"
+resourceGroupName="rg${project}base${instance}"
+keyVaultName="kv${project}base${instance}"
+storageAccountName="st${project}base${instance}"
 blobContainerName="${project}tfstates"
-servicePrincipalName="sp${owner}${project}${instance}"
+servicePrincipalName="sp${project}${instance}"
 
 # Resource group
 echo "Checking shared resource group [${resourceGroupName}]..."
