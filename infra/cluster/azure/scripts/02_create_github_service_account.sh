@@ -91,7 +91,7 @@ if [[ $servicePrincipal == "" ]]; then
 
   servicePrincipal=$(az ad sp create-for-rbac \
     --name $servicePrincipalName \
-    --role "Azure Kubernetes Service Contributor Role" \
+    --role "Contributor" \
     --scopes "/subscriptions/${subscriptionId}/resourceGroups/${mainResourceGroupName}/providers/Microsoft.ContainerService/managedClusters/${mainAksResourceName}" \
     --output json)
 
