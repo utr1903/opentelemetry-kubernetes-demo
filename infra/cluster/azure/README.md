@@ -31,6 +31,7 @@ The following Azure resources will be deployed:
 1. Resource group [`rg${project}main${instance}`] (to group all main resources)
 2. AKS [`aks${project}main${instance}`] (cluster itself)
 3. AKS resource group [`rgaks${project}main${instance}`] (to group the cluster nodepools)
+4. Key vault [`kv${project}main${instance}`] (to store service principal credentials)
 
 ## 03 - Creating service account for Github actions
 
@@ -45,4 +46,4 @@ bash 02_create_github_service_account.sh --project myproj --instance 001 --locat
 The following Azure resources will be deployed:
 
 1. Service principal [`sp${project}${instance}`] (to run Github workflows)
-2. Key vault [`kv${project}main${instance}`] (to store service principal credentials)
+2. Key vault secrets (to store service principal credentials)
