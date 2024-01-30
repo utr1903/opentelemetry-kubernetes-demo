@@ -11,6 +11,12 @@ resource "azurerm_kubernetes_cluster" "platform" {
 
   node_resource_group = var.aks_nodepool_resource_name
 
+  network_profile {
+    network_plugin = "kubenet"
+    network_policy = "calico"
+    load_balancer_sku = "basic"
+  }
+
   default_node_pool {
     name    = "system"
     vm_size = "Standard_D2_v2"
@@ -19,31 +25,11 @@ resource "azurerm_kubernetes_cluster" "platform" {
       nodePoolName = "system"
     }
 
-    enable_auto_scaling = true
-    node_count          = 1
-    min_count           = 1
-    max_count           = 1
+    enable_auto_scaling = false
+    node_count          = 4
   }
 
   identity {
     type = "SystemAssigned"
   }
-}
-
-# Kubernetes Nodepool - General usage
-resource "azurerm_kubernetes_cluster_node_pool" "general" {
-  name                  = "general"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.platform.id
-  vm_size               = "Standard_D2_v2"
-
-  orchestrator_version = var.aks_version
-
-  node_labels = {
-    nodePoolName = "general"
-  }
-
-  enable_auto_scaling = true
-  node_count          = 3
-  min_count           = 3
-  max_count           = 3
 }

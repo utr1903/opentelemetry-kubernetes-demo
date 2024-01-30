@@ -55,7 +55,7 @@ fi
 
 # K8s version
 if [[ $k8sVersion == "" ]]; then
-  k8sVersion="1.27.1"
+  k8sVersion="1.28.0"
   echo -e "K8s version [--k8s-version] is not provided. Using default version ${k8sVersion}.\n"
 fi
 
@@ -71,6 +71,7 @@ baseBlobContainerName="${project}tfstates"
 mainResourceGroupName="rg${project}main${instance}"
 mainAksResourceName="aks${project}main${instance}"
 mainAksNodepoolResourceGroupName="rgaks${project}main${instance}"
+mainKeyVaultName="kv${project}main${instance}"
 
 ### Perform Terraform deployment
 azureAccount=$(az account show)
@@ -95,6 +96,7 @@ if [[ $flagDestroy != "true" ]]; then
     -var aks_resource_name=$mainAksResourceName \
     -var aks_nodepool_resource_name=$mainAksNodepoolResourceGroupName \
     -var aks_version=$k8sVersion \
+    -var key_vault_name=$mainKeyVaultName \
     -var location=$location \
     -out "./tfplan"
 
@@ -106,7 +108,7 @@ if [[ $flagDestroy != "true" ]]; then
       # Get AKS credentials
       az aks get-credentials \
         --resource-group $mainResourceGroupName \
-        --name $aksResourceName \
+        --name $mainAksResourceName \
         --overwrite-existing
     fi
 else
@@ -117,5 +119,6 @@ else
     -var aks_resource_name=$mainAksResourceName \
     -var aks_nodepool_resource_name=$mainAksNodepoolResourceGroupName \
     -var aks_version=$k8sVersion \
+    -var key_vault_name=$mainKeyVaultName \
     -var location=$location
 fi
