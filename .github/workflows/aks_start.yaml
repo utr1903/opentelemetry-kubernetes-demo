@@ -1,4 +1,4 @@
-name: Cron Job Workflow
+name: AKS start cron job
 
 on:
   schedule:
