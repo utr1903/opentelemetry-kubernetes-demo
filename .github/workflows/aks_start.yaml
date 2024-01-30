@@ -2,7 +2,7 @@ name: AKS start cron job
 
 on:
   schedule:
-    - cron: "0 8 * * 1-5" # Run every weekday at 09:00
+    - cron: "0 8 * * 1-5" # Run every weekday at 08:00
 
 jobs:
   aks_start:
