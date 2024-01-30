@@ -60,25 +60,6 @@ else
   echo -e " -> Main resource groupd already exists.\n"
 fi
 
-# Key vault
-echo "Checking main key vault [${mainKeyVaultName}]..."
-keyVault=$(az keyvault show \
-  --resource-group $mainResourceGroupName \
-  --name $mainKeyVaultName \
-  2> /dev/null)
-if [[ $keyVault == "" ]]; then
-  echo " -> Main key vault does not exist. Creating..."
-
-  keyVault=$(az keyvault create \
-    --resource-group $mainResourceGroupName \
-    --name $mainKeyVaultName \
-    --location $location)
-
-  echo -e " -> Main key vault is created successfully.\n"
-else
-  echo -e " -> Main key vault already exists.\n"
-fi
-
 # Service principal
 echo "Checking service principal [${servicePrincipalName}]..."
 subscriptionId=$(az account show | jq -r .id)

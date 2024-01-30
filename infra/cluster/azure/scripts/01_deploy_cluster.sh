@@ -71,6 +71,7 @@ baseBlobContainerName="${project}tfstates"
 mainResourceGroupName="rg${project}main${instance}"
 mainAksResourceName="aks${project}main${instance}"
 mainAksNodepoolResourceGroupName="rgaks${project}main${instance}"
+mainKeyVaultName="kv${project}main${instance}"
 
 ### Perform Terraform deployment
 azureAccount=$(az account show)
@@ -95,6 +96,7 @@ if [[ $flagDestroy != "true" ]]; then
     -var aks_resource_name=$mainAksResourceName \
     -var aks_nodepool_resource_name=$mainAksNodepoolResourceGroupName \
     -var aks_version=$k8sVersion \
+    -var key_vault_name=$mainKeyVaultName \
     -var location=$location \
     -out "./tfplan"
 
@@ -117,5 +119,6 @@ else
     -var aks_resource_name=$mainAksResourceName \
     -var aks_nodepool_resource_name=$mainAksNodepoolResourceGroupName \
     -var aks_version=$k8sVersion \
+    -var key_vault_name=$mainKeyVaultName \
     -var location=$location
 fi
