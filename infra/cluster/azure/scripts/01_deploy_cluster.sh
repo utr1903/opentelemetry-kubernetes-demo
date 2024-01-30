@@ -55,7 +55,7 @@ fi
 
 # K8s version
 if [[ $k8sVersion == "" ]]; then
-  k8sVersion="1.27.1"
+  k8sVersion="1.28.0"
   echo -e "K8s version [--k8s-version] is not provided. Using default version ${k8sVersion}.\n"
 fi
 
@@ -106,7 +106,7 @@ if [[ $flagDestroy != "true" ]]; then
       # Get AKS credentials
       az aks get-credentials \
         --resource-group $mainResourceGroupName \
-        --name $aksResourceName \
+        --name $mainAksResourceName \
         --overwrite-existing
     fi
 else
