@@ -47,3 +47,32 @@ The following Azure resources will be deployed:
 
 1. Service principal [`sp${project}${instance}`] (to run Github workflows)
 2. Key vault secrets (to store service principal credentials)
+
+After this step is completed, we need to store the following parameters as Github secrets so that our Github workflows can talk to Azure successfully:
+
+1. PROJECT (from the flag `--project`)
+2. INSTANCE (from the flag `--instance`)
+3. AZURE_TENANT_ID (your Azure tenant ID)
+4. AZURE_SUBSCRIPTION_ID (your Azure subscription ID)
+5. AZURE_SERVICE_PRINCIPAL_APP_ID (app ID of the service principal)
+6. AZURE_SERVICE_PRINCIPAL_SECRET (secret of the service principal)
+
+## 04 - Cleaning up
+
+After we are done with the entire environment, we need to clean up everything we have created. In order to that, do the following sequentially:
+
+First, we destroy the Terraform deployment:
+
+```shell
+bash 01_deploy_cluster.sh --project myproj --instance 001 --location westeurope --k8s-version 1.28.0 --destroy
+```
+
+Next, we delete the service principal (and the app registration behind it) and remove all of the baseline resources by running the clean up script [`03_cleanup_resources.sh`](/infra/cluster/azure/scripts/03_cleanup_resources.sh).
+
+```shell
+bash 03_cleanup_resources.sh --project myproj --instance 001 --location westeurope --destroy
+```
+
+**IMPORTANT**: The `project`, `instance` and `location` should be the same as the ones in the baseline and main!
+
+Last, the key vault needs to be purged. Azure deletes the key vaults in a soft manner so that they can be recovered. In order to permanently remove a key vault, it has to be purged. That's something we need to do manually in the portal.

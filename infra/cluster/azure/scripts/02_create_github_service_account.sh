@@ -64,8 +64,8 @@ fi
 echo "Checking service principal [${servicePrincipalName}]..."
 subscriptionId=$(az account show | jq -r .id)
 
-servicePrincipal=$(az ad sp show \
-  --id $servicePrincipalName \
+servicePrincipal=$(az ad app list \
+  --display-name $servicePrincipalName \
   2> /dev/null)
 if [[ $servicePrincipal == "" ]]; then
   echo " -> Service principal does not exist. Creating..."
@@ -99,5 +99,3 @@ if [[ $servicePrincipal == "" ]]; then
 else
   echo -e " -> Service principal already exists.\n"
 fi
-
-
