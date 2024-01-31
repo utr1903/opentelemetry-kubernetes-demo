@@ -46,5 +46,5 @@ jobs:
         with:
           context: "./apps/${{ inputs.language }}/."
           push: true
-          tags: ghcr.io/${{ github.actor }}/${{ secrets.PROJECT }}:${{ github.sha }}
+          tags: ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{ secrets.PROJECT }}-${{ inputs.application }}-${{ inputs.language }}${{ github.sha }}
           build-args: "APP_NAME=${{ inputs.application }}"
