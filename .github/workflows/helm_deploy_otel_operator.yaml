@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/helm_deploy_otel_operator.yml"
+      - ".github/workflows/helm_deploy_otel_operator.yaml"
       - "infra/helm/otel/operator/**"
 
 jobs:
