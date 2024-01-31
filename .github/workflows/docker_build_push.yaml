@@ -42,3 +42,4 @@ jobs:
           context: "./apps/${{ inputs.language }}/."
           push: true
           tags: ${{ github.actor }}/${{ secrets.PROJECT }}:${{ github.sha }}
+          build-args: "APP_NAME=${{ inputs.language }}"
