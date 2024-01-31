@@ -40,7 +40,7 @@ jobs:
         id: install_helm
         uses: azure/setup-helm@v3
         with:
-          version: "v3.5"
+          version: "v3.11.1"
 
       - name: Deploy Helm chart
         id: deploy_helm_chart
@@ -49,5 +49,6 @@ jobs:
 
       - name: Logout of Azure
         id: logout_from_azure
+        if: always()
         run: |
           az logout

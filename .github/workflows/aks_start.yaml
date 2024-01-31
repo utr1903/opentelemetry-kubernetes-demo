@@ -11,9 +11,11 @@ jobs:
 
     steps:
       - name: Checkout repository
+        id: checkout_repo
         uses: actions/checkout@v2
 
       - name: Login to Azure
+        id: login_to_azure
         run: |
           az login \
             --service-principal \
@@ -22,6 +24,7 @@ jobs:
             --tenant ${{ secrets.AZURE_TENANT_ID }}
 
       - name: Start AKS
+        id: start_aks
         run: |
           az aks start \
           --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
@@ -30,5 +33,7 @@ jobs:
           --no-wait
 
       - name: Logout of Azure
+        id: logout_from_azure
+        if: always()
         run: |
           az logout
