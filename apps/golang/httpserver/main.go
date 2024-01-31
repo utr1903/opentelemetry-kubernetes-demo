@@ -3,10 +3,19 @@ package main
 import (
 	"context"
 
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/httpserver/config"
 )
 
 func main() {
+
+	// Create new config
+	config.NewConfig()
+	cfg := config.GetConfig()
+
+	// Initialize logger
+	logger.NewLogger(cfg.ServiceName)
 
 	// Get context
 	ctx := context.Background()
