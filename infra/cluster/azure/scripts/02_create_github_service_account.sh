@@ -66,15 +66,15 @@ subscriptionId=$(az account show | jq -r .id)
 
 servicePrincipal=$(az ad app list \
   --display-name $servicePrincipalName \
-  2> /dev/null)
-if [[ $servicePrincipal == "" ]]; then
+  2> /dev/null \
+  | jq -r .[0])
+if [[ $servicePrincipal == "null" ]]; then
   echo " -> Service principal does not exist. Creating..."
 
   servicePrincipal=$(az ad sp create-for-rbac \
     --name $servicePrincipalName \
     --role "Contributor" \
-    --scopes "/subscriptions/${subscriptionId}/resourceGroups/${mainResourceGroupName}/providers/Microsoft.ContainerService/managedClusters/${mainAksResourceName}" \
-    --output json)
+    --scopes "/subscriptions/${subscriptionId}/resourceGroups/${mainResourceGroupName}/providers/Microsoft.ContainerService/managedClusters/${mainAksResourceName}")
 
   echo -e " -> Service principal is created successfully.\n"
 
