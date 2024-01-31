@@ -49,5 +49,6 @@ jobs:
 
       - name: Logout of Azure
         id: logout_from_azure
+        if: always()
         run: |
           az logout
