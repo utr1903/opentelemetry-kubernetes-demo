@@ -1,0 +1,59 @@
+name: Helm OTel collector deployment
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/helm_deploy_otel_collector.yaml"
+      - "infra/helm/otel/collector/**"
+
+jobs:
+  helm_deploy:
+    name: "Deploy OTel collector"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        id: checkout_repo
+        uses: actions/checkout@v2
+
+      - name: Login to Azure
+        id: login_to_azure
+        run: |
+          az login \
+            --service-principal \
+            -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_APP_ID }} \
+            -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_SECRET }} \
+            --tenant ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: Get AKS credentials
+        id: get_aks_credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "rg${{ secrets.PROJECT }}main${{ secrets.INSTANCE }}" \
+            --name "aks${{ secrets.PROJECT }}main${{ secrets.INSTANCE }}" \
+            --overwrite-existing
+
+      - name: Install Helm
+        id: install_helm
+        uses: azure/setup-helm@v3
+        with:
+          version: "v3.11.1"
+
+      - name: Deploy Helm chart
+        id: deploy_helm_chart
+        run: |
+          bash ./infra/helm/otel/collector/deploy.sh \
+            --project ${{ secrets.PROJECT }} \
+            --instance ${{ secrets.INSTANCE }} \
+            --cluster-type aks \
+            --newrelic-otlp-endpoint ${{ secrets.NEWRELIC_OTLP_ENDPOINT }} \
+            --newrelic-opsteam-license-key ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }}
+
+      - name: Logout of Azure
+        id: logout_from_azure
+        if: always()
+        run: |
+          az logout
