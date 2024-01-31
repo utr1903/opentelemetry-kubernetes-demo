@@ -1,4 +1,4 @@
-name: Helm Kafka deployment
+name: Docker build & push
 
 on:
   workflow_dispatch:
