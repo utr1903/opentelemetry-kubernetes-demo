@@ -1,0 +1,3 @@
+# OTel collector
+
+To be implemented...
