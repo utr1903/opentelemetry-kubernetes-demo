@@ -1,4 +1,4 @@
-name: Helm OTel operator deployment
+name: Helm OTel collector deployment
 
 on:
   workflow_dispatch:
@@ -6,12 +6,12 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/helm_deploy_otel_operator.yaml"
-      - "infra/helm/otel/operator/**"
+      - ".github/workflows/helm_deploy_otel_collector.yaml"
+      - "infra/helm/otel/collector/**"
 
 jobs:
   helm_deploy:
-    name: "Deploy OTel operator"
+    name: "Deploy OTel collector"
     runs-on: ubuntu-latest
 
     steps:
@@ -45,7 +45,12 @@ jobs:
       - name: Deploy Helm chart
         id: deploy_helm_chart
         run: |
-          bash ./infra/helm/otel/operator/deploy.sh
+          bash ./infra/helm/otel/collector/deploy.sh \
+            --project ${{ secrets.PROJECT }} \
+            --instance ${{ secrets.INSTANCE }} \
+            --cluster-type aks \
+            --newrelic-otlp-endpoint ${{ secrets.NEWRELIC_OTLP_ENDPOINT }} \
+            --newrelic-opsteam-license-key ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }}
 
       - name: Logout of Azure
         id: logout_from_azure
