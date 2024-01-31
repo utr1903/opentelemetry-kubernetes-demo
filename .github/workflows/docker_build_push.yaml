@@ -8,6 +8,11 @@ on:
         description: Name of the programming language
         options:
           - golang
+      application:
+        type: choice
+        description: Name of the application
+        options:
+          - httpserver
 
 jobs:
   docker_build:
@@ -41,4 +46,5 @@ jobs:
         with:
           context: "./apps/${{ inputs.language }}/."
           push: true
-          tags: ${{ github.actor }}/${{ secrets.PROJECT }}:${{ github.sha }}
+          tags: ghcr.io/${{ github.actor }}/${{ secrets.PROJECT }}-${{ inputs.application }}-${{ inputs.language }}:${{ github.sha }}
+          build-args: "APP_NAME=${{ inputs.application }}"
