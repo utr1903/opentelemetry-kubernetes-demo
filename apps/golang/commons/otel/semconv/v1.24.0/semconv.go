@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/IBM/sarama"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -199,7 +200,6 @@ func splitAddressAndPort(
 }
 
 // DATABASE
-
 const (
 	DatabaseSystem      = attribute.Key("db.system")
 	DatabaseUser        = attribute.Key("db.user")
@@ -208,3 +208,68 @@ const (
 	DatabaseDbOperation = attribute.Key("db.operation")
 	DatabaseDbStatement = attribute.Key("db.statement")
 )
+
+// KAFKA
+// https://github.com/open-telemetry/semantic-conventions/tree/v1.24.0/docs/messaging
+const (
+	KafkaConsumerName = "kafka_consumer"
+
+	MessagingConsumerLatencyName = "messaging.receive.duration"
+
+	MessagingSystemName          = "messaging.system"
+	MessagingSystem              = attribute.Key(MessagingSystemName)
+	MessagingOperationName       = "messaging.operation"
+	MessagingOperation           = attribute.Key(MessagingOperationName)
+	MessagingClientIdName        = "messaging.client_id"
+	MessagingClientId            = attribute.Key(MessagingClientIdName)
+	MessagingDestinationNameName = "messaging.destination.name"
+	MessagingDestinationName     = attribute.Key(MessagingDestinationNameName)
+
+	// KAFKA
+	MessagingKafkaDestinationPartitionName = "messaging.kafka.destination.partition"
+	MessagingKafkaDestinationPartition     = attribute.Key(MessagingKafkaDestinationPartitionName)
+	MessagingKafkaConsumerGroupName        = "messaging.kafka.consumer.group"
+	MessagingKafkaConsumerGroup            = attribute.Key(MessagingKafkaConsumerGroupName)
+	MessagingKafkaMessageOffsetName        = "messaging.kafka.message.offset"
+	MessagingKafkaMessageOffset            = attribute.Key(MessagingKafkaMessageOffsetName)
+)
+
+var (
+	MessagingExplicitBucketBoundaries = []float64{
+		0.005,
+		0.010,
+		0.025,
+		0.050,
+		0.075,
+		0.100,
+		0.250,
+		0.500,
+		0.750,
+		1.000,
+		2.500,
+		5.000,
+		7.500,
+		10.000,
+	}
+)
+
+func WithMessagingKafkaConsumerAttributes(
+	msg *sarama.ConsumerMessage,
+	consumerGroup string,
+) []attribute.KeyValue {
+
+	numAttributes := 4 // Operation, system, destination & partition
+
+	// Create attributes array
+	attrs := make([]attribute.KeyValue, 0, numAttributes)
+
+	// Method, scheme & protocol version
+	attrs = append(attrs, MessagingSystem.String("kafka"))
+	attrs = append(attrs, MessagingOperation.String("receive"))
+	attrs = append(attrs, MessagingDestinationName.String(msg.Topic))
+	attrs = append(attrs, MessagingKafkaDestinationPartition.Int(int(msg.Partition)))
+	attrs = append(attrs, MessagingKafkaConsumerGroup.String(consumerGroup))
+	attrs = append(attrs, MessagingKafkaMessageOffset.Int(int(msg.Offset)))
+
+	return attrs
+}
