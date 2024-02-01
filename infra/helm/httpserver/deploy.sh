@@ -11,6 +11,10 @@ while (( "$#" )); do
       instance="${2}"
       shift
       ;;
+    --language)
+      instance="${2}"
+      shift
+      ;;
     *)
       shift
       ;;
@@ -28,6 +32,12 @@ fi
 # Instance
 if [[ $instance == "" ]]; then
   echo -e "Instance [--instance] is not provided!\n"
+  exit 1
+fi
+
+# Language
+if [[ $language == "" ]]; then
+  echo -e "Language [--language] is not provided!\n"
   exit 1
 fi
 
