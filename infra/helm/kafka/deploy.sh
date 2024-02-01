@@ -3,7 +3,7 @@
 ### Set variables
 declare -A kafka
 kafka["name"]="kafka"
-kafka["namespace"]="opsteam"
+kafka["namespace"]="ops"
 
 ###################
 ### Deploy Helm ###
