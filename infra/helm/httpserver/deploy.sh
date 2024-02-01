@@ -101,4 +101,4 @@ helm upgrade ${httpserver[name]} \
   --set mysql.table=${mysql[table]} \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
-  "./infra/helm/${application}/${language}/chart"
+  "./infra/helm/${application}/chart"
