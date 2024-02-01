@@ -45,6 +45,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: "./apps/${{ inputs.language }}/."
+          platforms: "linux/amd64,linux/arm64"
           push: true
           tags: ghcr.io/${{ github.actor }}/${{ secrets.PROJECT }}-${{ inputs.application }}-${{ inputs.language }}:${{ github.sha }}
           build-args: "APP_NAME=${{ inputs.application }}"
