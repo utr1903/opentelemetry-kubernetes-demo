@@ -41,10 +41,17 @@ const (
 	HttpInterceptorName   = "http_interceptor"
 	HttpServerLatencyName = "http.server.request.duration"
 
-	HttpMethodKeyName = "http.request.method"
-	HttpMethodKey     = attribute.Key(HttpMethodKeyName)
-	HttpSchemeKeyName = "url.scheme"
-	HttpSchemeKey     = attribute.Key(HttpSchemeKeyName)
+	HttpClientName        = "http_client"
+	HttpClientLatencyName = "http.client.request.duration"
+
+	HttpMethodKeyName         = "http.request.method"
+	HttpMethodKey             = attribute.Key(HttpMethodKeyName)
+	HttpSchemeKeyName         = "url.scheme"
+	HttpSchemeKey             = attribute.Key(HttpSchemeKeyName)
+	HttpUserAgentOriginalName = "user_agent.original"
+	HttpUserAgentOriginal     = attribute.Key(HttpUserAgentOriginalName)
+	HttpUrlFullName           = "url.full"
+	HttpUrlFull               = attribute.Key(HttpUrlFullName)
 
 	HttpResponseStatusCodeName = "http.response.status_code"
 	HttpResponseStatusCode     = attribute.Key(HttpResponseStatusCodeName)
@@ -68,6 +75,60 @@ var (
 		10.000,
 	}
 )
+
+func WithHttpClientAttributes(
+	req *http.Request,
+) []attribute.KeyValue {
+
+	numAttributes := 4 // Method, scheme, proto & server address
+
+	// Get user agent
+	userAgent := req.UserAgent()
+	if userAgent != "" {
+		numAttributes++
+	}
+
+	// Get server address & serverPort
+	serverAddress, serverPort := splitAddressAndPort(req.Host)
+	if serverPort > 0 {
+		numAttributes++
+	}
+
+	// Get client address & port
+	clientAddress, clientPort := splitAddressAndPort(req.RemoteAddr)
+	if clientPort > 0 {
+		numAttributes++
+	}
+
+	// Create attributes array
+	attrs := make([]attribute.KeyValue, 0, numAttributes)
+
+	// Method, scheme & protocol version
+	attrs = append(attrs, httpMethod(req.Method))
+	attrs = append(attrs, httpScheme(req.TLS != nil))
+	attrs = append(attrs, httpNetworkProtocolVersion(req.Proto))
+
+	// User agent
+	if userAgent != "" {
+		attrs = append(attrs, HttpUserAgentOriginal.String(userAgent))
+	}
+
+	// Server address & port
+	attrs = append(attrs, ServerAddress.String(serverAddress))
+	if serverPort > 0 {
+		attrs = append(attrs, ServerPort.Int(serverPort))
+	}
+
+	// Client address & port
+	if clientAddress != "" {
+		attrs = append(attrs, ClientAddress.String(clientAddress))
+		if serverPort > 0 {
+			attrs = append(attrs, ClientPort.Int(clientPort))
+		}
+	}
+
+	return attrs
+}
 
 func WithHttpServerAttributes(
 	req *http.Request,
@@ -212,8 +273,10 @@ const (
 // KAFKA
 // https://github.com/open-telemetry/semantic-conventions/tree/v1.24.0/docs/messaging
 const (
+	KafkaProducerName = "kafka_producer"
 	KafkaConsumerName = "kafka_consumer"
 
+	MessagingProducerLatencyName = "messaging.publish.duration"
 	MessagingConsumerLatencyName = "messaging.receive.duration"
 
 	MessagingSystemName          = "messaging.system"
@@ -252,6 +315,24 @@ var (
 		10.000,
 	}
 )
+
+func WithMessagingKafkaProducerAttributes(
+	msg *sarama.ProducerMessage,
+) []attribute.KeyValue {
+
+	numAttributes := 4 // Operation, system, destination & partition
+
+	// Create attributes array
+	attrs := make([]attribute.KeyValue, 0, numAttributes)
+
+	// Method, scheme & protocol version
+	attrs = append(attrs, MessagingSystem.String("kafka"))
+	attrs = append(attrs, MessagingOperation.String("publish"))
+	attrs = append(attrs, MessagingDestinationName.String(msg.Topic))
+	attrs = append(attrs, MessagingKafkaDestinationPartition.Int(int(msg.Partition)))
+
+	return attrs
+}
 
 func WithMessagingKafkaConsumerAttributes(
 	msg *sarama.ConsumerMessage,

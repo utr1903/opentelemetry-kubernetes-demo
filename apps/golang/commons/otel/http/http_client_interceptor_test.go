@@ -7,13 +7,13 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
 	semconv "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/semconv/v1.24.0"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
 )
 
-func Test_CommonAttributesCreatedSuccessfully(t *testing.T) {
+func Test_CommonClientAttributesCreatedSuccessfully(t *testing.T) {
 	httpMethod := http.MethodPost
 	host := "localhost"
 	port := "8080"
@@ -33,8 +33,8 @@ func Test_CommonAttributesCreatedSuccessfully(t *testing.T) {
 	}
 	req.Header = headers
 
-	m := &httpMiddleware{}
-	spanAttrs, metricAttrs := m.getSpanAndMetricServerAttributes(req)
+	c := &HttpClient{}
+	spanAttrs, metricAttrs := c.getSpanAndMetricServerAttributes(req)
 
 	// Check lengths of span and metric attributes
 	if len(spanAttrs) != len(metricAttrs) {
@@ -71,49 +71,41 @@ func Test_CommonAttributesCreatedSuccessfully(t *testing.T) {
 			}
 		}
 
-		if spanAttr.Key == semconv.UserAgentOriginalName &&
+		if spanAttr.Key == semconv.HttpUserAgentOriginalName &&
 			spanAttr.Value.AsString() != userAgent {
-			t.Errorf("%s is set incorrectly!", semconv.UserAgentOriginalName)
+			t.Errorf("%s is set incorrectly!", semconv.HttpUserAgentOriginalName)
 		}
 	}
 }
 
-func Test_ExtractTraceContextCorrectly(t *testing.T) {
-	prop := propagation.TraceContext{}
+func Test_InjectTraceContextCorrectly(t *testing.T) {
 
-	// Generate a new context out of a new span
-	ctxMock := context.Background()
-	spanCtx := trace.NewSpanContext(
-		trace.SpanContextConfig{
-			TraceID: trace.TraceID{0x01},
-			SpanID:  trace.SpanID{0x01},
-		})
-	ctxMock = trace.ContextWithRemoteSpanContext(ctxMock, spanCtx)
+	mockCtx := context.Background()
 
-	// Inject the trace context into the headers
-	headers := http.Header{}
-	prop.Inject(ctxMock, propagation.HeaderCarrier(headers))
+	// Create tracer provider
+	tp := otel.NewTraceProvider(mockCtx)
+	defer otel.ShutdownTraceProvider(mockCtx, tp)
+
+	// prop := propagation.TraceContext{}
+
+	httpMethod := http.MethodPost
+	httpStatusCode := http.StatusAccepted
 
 	// Createa a mock HTTP server
 	mockServer := httptest.NewServer(
-		NewHandler(http.HandlerFunc(
+		http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-
-				// Get context of the request -> This should have the mock context
-				ctx := prop.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
-				span := trace.SpanContextFromContext(ctx)
-
-				// Check whether the span ID is the same as what is defined in the mock context
-				if span.SpanID() != spanCtx.SpanID() {
-					t.Fatalf("testing remote SpanID: got %s, expected %s", span.SpanID(), spanCtx.SpanID())
-				}
-			}), "test"))
+				w.WriteHeader(httpStatusCode)
+				w.Write([]byte("Test"))
+			}))
 	defer mockServer.Close()
 
-	// Create a request with mock context
-	r, err := http.NewRequestWithContext(
-		ctxMock,
-		http.MethodGet,
+	httpClient := New(
+		WithTimeout(time.Duration(10 * time.Second)),
+	)
+
+	req, err := http.NewRequest(
+		httpMethod,
 		mockServer.URL,
 		nil,
 	)
@@ -121,13 +113,13 @@ func Test_ExtractTraceContextCorrectly(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Add headers to the request
-	r.Header = headers
+	res, _ := httpClient.Do(mockCtx, req, fmt.Sprintf("HTTP %s", req.Method))
+	if res.StatusCode != httpStatusCode {
+		t.Error("HTTP status code is not the as given.")
+	}
 
-	// Perform HTTP request
-	c := http.Client{}
-	_, err = c.Do(r)
-	if err != nil {
-		t.Fatal(err)
+	traceparent := req.Header.Get("Traceparent")
+	if len(traceparent) == 0 {
+		t.Error("Span context is not set to the outgoing request.")
 	}
 }

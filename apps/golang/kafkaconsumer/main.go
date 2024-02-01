@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
@@ -12,7 +11,6 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/config"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/consumer"
-	"go.opentelemetry.io/contrib/instrumentation/runtime"
 )
 
 func main() {
@@ -35,11 +33,8 @@ func main() {
 	mp := otel.NewMetricProvider(ctx)
 	defer otel.ShutdownMetricProvider(ctx, mp)
 
-	// Start runtime metric collection
-	err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
-	if err != nil {
-		panic(err)
-	}
+	// Collect runtime metrics
+	otel.StartCollectingRuntimeMetrics()
 
 	// Instantiate MySQL database
 	db := mysql.New(
