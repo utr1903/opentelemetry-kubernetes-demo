@@ -56,7 +56,7 @@ fi
 # mysql
 declare -A mysql
 mysql["name"]="mysql"
-mysql["namespace"]="${language}"
+mysql["namespace"]="ops"
 mysql["username"]="root"
 mysql["password"]="verysecretpassword"
 mysql["port"]=3306
