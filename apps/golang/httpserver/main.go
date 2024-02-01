@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"

@@ -11,6 +11,14 @@ while (( "$#" )); do
       instance="${2}"
       shift
       ;;
+    --application)
+      application="${2}"
+      shift
+      ;;
+    --language)
+      language="${2}"
+      shift
+      ;;
     *)
       shift
       ;;
@@ -31,12 +39,24 @@ if [[ $instance == "" ]]; then
   exit 1
 fi
 
+# Application
+if [[ $application == "" ]]; then
+  echo -e "Application [--application] is not provided!\n"
+  exit 1
+fi
+
+# Language
+if [[ $language == "" ]]; then
+  echo -e "Language [--language] is not provided!\n"
+  exit 1
+fi
+
 ### Set variables
 
 # mysql
 declare -A mysql
 mysql["name"]="mysql"
-mysql["namespace"]="${language}"
+mysql["namespace"]="ops"
 mysql["username"]="root"
 mysql["password"]="verysecretpassword"
 mysql["port"]=3306
@@ -81,4 +101,4 @@ helm upgrade ${httpserver[name]} \
   --set mysql.table=${mysql[table]} \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
-  "./chart"
+  "./infra/helm/${application}/chart"

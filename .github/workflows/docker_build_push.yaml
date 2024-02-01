@@ -16,7 +16,7 @@ on:
 
 jobs:
   docker_build:
-    name: "Build Docker image"
+    name: "Build Docker image ${{ inputs.application }}-${{ inputs.language }}"
     runs-on: ubuntu-latest
 
     steps:
@@ -45,6 +45,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: "./apps/${{ inputs.language }}/."
+          platforms: "linux/amd64,linux/arm64"
           push: true
-          tags: ghcr.io/${{ github.actor }}/${{ secrets.PROJECT }}-${{ inputs.application }}-${{ inputs.language }}:${{ github.sha }}
+          tags: "ghcr.io/${{ github.actor }}/${{ secrets.PROJECT }}-${{ inputs.application }}-${{ inputs.language }}:${{ github.sha }},ghcr.io/${{ github.actor }}/${{ secrets.PROJECT }}-${{ inputs.application }}-${{ inputs.language }}:latest"
           build-args: "APP_NAME=${{ inputs.application }}"

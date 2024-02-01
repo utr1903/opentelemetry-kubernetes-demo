@@ -5,6 +5,7 @@ go 1.21
 replace github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons => ../commons
 
 require (
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons v0.0.0
 	go.opentelemetry.io/otel v1.22.0
