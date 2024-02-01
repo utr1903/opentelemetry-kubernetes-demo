@@ -11,10 +11,13 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	otelkafka "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/kafka"
+	otelmysql "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/mysql"
+	semconv "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
 )
+
+const CONSUMER string = "kafkaconsumer"
 
 type Opts struct {
 	ServiceName     string
@@ -34,8 +37,9 @@ func defaultOpts() *Opts {
 }
 
 type KafkaConsumer struct {
-	Opts  *Opts
-	MySql *mysql.MySqlDatabase
+	Opts              *Opts
+	MySql             *mysql.MySqlDatabase
+	MySqlOtelEnricher *otelmysql.MySqlEnricher
 }
 
 // Create a kafka consumer instance
@@ -54,7 +58,15 @@ func New(
 
 	return &KafkaConsumer{
 		MySql: db,
-		Opts:  opts,
+		MySqlOtelEnricher: otelmysql.NewMysqlEnricher(
+			otelmysql.WithTracerName(CONSUMER),
+			otelmysql.WithServer(db.Opts.Server),
+			otelmysql.WithPort(db.Opts.Port),
+			otelmysql.WithUsername(db.Opts.Username),
+			otelmysql.WithDatabase(db.Opts.Database),
+			otelmysql.WithTable(db.Opts.Table),
+		),
+		Opts: opts,
 	}
 }
 
@@ -105,10 +117,11 @@ func (k *KafkaConsumer) StartConsumerGroup(
 
 	otelconsumer := otelkafka.New()
 	handler := groupHandler{
-		ready:    make(chan bool),
-		Opts:     k.Opts,
-		MySql:    k.MySql,
-		Consumer: otelconsumer,
+		ready:             make(chan bool),
+		Opts:              k.Opts,
+		MySql:             k.MySql,
+		MySqlOtelEnricher: k.MySqlOtelEnricher,
+		Consumer:          otelconsumer,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -145,10 +158,11 @@ func (k *KafkaConsumer) StartConsumerGroup(
 }
 
 type groupHandler struct {
-	ready    chan bool
-	Opts     *Opts
-	MySql    *mysql.MySqlDatabase
-	Consumer *otelkafka.KafkaConsumer
+	ready             chan bool
+	Opts              *Opts
+	MySql             *mysql.MySqlDatabase
+	MySqlOtelEnricher *otelmysql.MySqlEnricher
+	Consumer          *otelkafka.KafkaConsumer
 }
 
 func (g *groupHandler) Setup(_ sarama.ConsumerGroupSession) error {
@@ -216,33 +230,15 @@ func (g *groupHandler) storeIntoDb(
 	dbOperation := "INSERT"
 	dbStatement := dbOperation + " INTO " + g.MySql.Opts.Table + " (name) VALUES (?)"
 
-	// Get current parentSpan
+	// Create database span
 	parentSpan := trace.SpanFromContext(ctx)
-	defer parentSpan.End()
-
-	// Create db span
-	spanName := dbOperation + " " + g.MySql.Opts.Database + "." + g.MySql.Opts.Table
-	ctx, dbSpan := parentSpan.TracerProvider().
-		Tracer(g.Opts.ServiceName).
-		Start(
-			ctx,
-			spanName,
-			trace.WithSpanKind(trace.SpanKindClient),
-		)
+	ctx, dbSpan := g.MySqlOtelEnricher.CreateSpan(
+		ctx,
+		parentSpan,
+		dbOperation,
+		dbStatement,
+	)
 	defer dbSpan.End()
-
-	// Set additional span attributes
-	dbSpanAttrs := []attribute.KeyValue{
-		semconv.DBSystemMySQL,
-		semconv.DBUser(g.MySql.Opts.Username),
-		semconv.NetPeerName(g.MySql.Opts.Server),
-		// semconv.NetPeerPort(int(s.MySql.Opts.Port)),
-		semconv.NetTransportTCP,
-		semconv.DBName(g.MySql.Opts.Database),
-		semconv.DBSQLTable(g.MySql.Opts.Table),
-		semconv.DBOperation(dbOperation),
-		semconv.DBStatement(dbStatement),
-	}
 
 	// Prepare a statement
 	stmt, err := g.MySql.Instance.Prepare(dbStatement)
@@ -250,13 +246,8 @@ func (g *groupHandler) storeIntoDb(
 		msg := "Preparing DB statement is failed."
 		logger.Log(logrus.ErrorLevel, ctx, name, msg)
 
-		dbSpanAttrs = append(dbSpanAttrs, semconv.OTelStatusCodeError)
-		dbSpanAttrs = append(dbSpanAttrs, semconv.OTelStatusDescription(msg))
-		dbSpan.SetAttributes(dbSpanAttrs...)
-
-		dbSpan.RecordError(err, trace.WithAttributes(
-			semconv.ExceptionEscaped(true),
-		))
+		// Add error to span
+		g.addErrorToSpan(dbSpan, msg, err)
 
 		return err
 	}
@@ -268,18 +259,31 @@ func (g *groupHandler) storeIntoDb(
 		msg := "Storing into DB is failed."
 		logger.Log(logrus.ErrorLevel, ctx, name, msg)
 
-		dbSpanAttrs = append(dbSpanAttrs, semconv.OTelStatusCodeError)
-		dbSpanAttrs = append(dbSpanAttrs, semconv.OTelStatusDescription(msg))
-		dbSpan.SetAttributes(dbSpanAttrs...)
-
-		dbSpan.RecordError(err, trace.WithAttributes(
-			semconv.ExceptionEscaped(true),
-		))
+		// Add error to span
+		g.addErrorToSpan(dbSpan, msg, err)
 
 		return err
 	}
 
-	dbSpan.SetAttributes(dbSpanAttrs...)
 	logger.Log(logrus.InfoLevel, ctx, name, "Storing into DB is succeeded.")
 	return nil
+}
+
+// Add error to span
+func (g *groupHandler) addErrorToSpan(
+	span trace.Span,
+	description string,
+	err error,
+) {
+
+	dbSpanAttrs := []attribute.KeyValue{
+		semconv.OtelStatusCode.String("ERROR"),
+		semconv.OtelStatusDescription.String(description),
+	}
+	span.SetAttributes(dbSpanAttrs...)
+	span.RecordError(
+		err,
+		trace.WithAttributes(
+			semconv.ExceptionEscaped.Bool(true),
+		))
 }

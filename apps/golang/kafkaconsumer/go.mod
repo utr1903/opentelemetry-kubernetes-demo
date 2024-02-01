@@ -1,6 +1,6 @@
 module github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer
 
-go 1.21.5
+go 1.21
 
 replace github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons => ../commons
 
