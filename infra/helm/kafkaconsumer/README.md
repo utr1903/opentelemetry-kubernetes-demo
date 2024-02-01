@@ -1,0 +1,3 @@
+# Kafka consumer
+
+To be implemented...
