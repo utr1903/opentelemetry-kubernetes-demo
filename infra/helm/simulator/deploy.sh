@@ -73,7 +73,7 @@ httpserver["port"]=8080
 
 # simulator
 declare -A simulator
-simulator["name"]="simulator-${language}"
+simulator["name"]="simulator"
 simulator["imageName"]="ghcr.io/utr1903/${project}-${simulator[name]}-${language}:latest"
 simulator["namespace"]="${language}"
 simulator["replicas"]=3
