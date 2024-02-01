@@ -77,7 +77,7 @@ fi
 # otelcollectors
 declare -A otelcollectors
 otelcollectors["name"]="nrotelk8s"
-otelcollectors["namespace"]="monitoring"
+otelcollectors["namespace"]="ops"
 
 ###################
 ### Deploy Helm ###
