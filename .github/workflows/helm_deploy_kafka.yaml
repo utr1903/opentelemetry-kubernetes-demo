@@ -2,12 +2,6 @@ name: Helm Kafka deployment
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/helm_deploy_kafka.yaml"
-      - "infra/helm/kafka/**"
 
 jobs:
   helm_deploy:
