@@ -14,6 +14,7 @@ on:
         options:
           - httpserver
           - kafkaconsumer
+          - simulator
 
 jobs:
   docker_build:
