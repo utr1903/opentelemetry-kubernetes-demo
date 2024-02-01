@@ -1,3 +1,0 @@
-# .NET
-
-To be implemented...
