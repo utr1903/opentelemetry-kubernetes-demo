@@ -12,7 +12,7 @@ while (( "$#" )); do
       shift
       ;;
     --language)
-      instance="${2}"
+      language="${2}"
       shift
       ;;
     *)
