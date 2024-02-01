@@ -21,7 +21,7 @@ type KafkaConsumer struct {
 	latency metric.Float64Histogram
 }
 
-func New() *KafkaConsumer {
+func NewKafkaConsumer() *KafkaConsumer {
 
 	// Instantiate trace provider
 	tracer := otel.GetTracerProvider().Tracer(semconv.KafkaConsumerName)
