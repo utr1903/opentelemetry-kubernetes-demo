@@ -73,9 +73,11 @@ if [[ $newrelicOpsteamLicenseKey == "" ]]; then
 fi
 
 ### Set variables
+
+# otelcollectors
 declare -A otelcollectors
 otelcollectors["name"]="nrotelk8s"
-otelcollectors["namespace"]="monitoring"
+otelcollectors["namespace"]="ops"
 
 ###################
 ### Deploy Helm ###
@@ -85,7 +87,7 @@ otelcollectors["namespace"]="monitoring"
 helm repo add newrelic-experimental https://newrelic-experimental.github.io/monitoring-kubernetes-with-opentelemetry/charts
 helm repo update
 
-# otel-collector
+# otelcollector
 helm upgrade ${otelcollectors[name]} \
   --install \
   --wait \

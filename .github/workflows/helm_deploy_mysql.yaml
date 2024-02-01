@@ -1,11 +1,11 @@
-name: Helm OTel collector deployment
+name: Helm MySQL deployment
 
 on:
   workflow_dispatch:
 
 jobs:
   helm_deploy:
-    name: "Deploy OTel collector"
+    name: "Deploy MySQL"
     runs-on: ubuntu-latest
 
     steps:
@@ -39,12 +39,7 @@ jobs:
       - name: Deploy Helm chart
         id: deploy_helm_chart
         run: |
-          bash ./infra/helm/otel/collector/deploy.sh \
-            --project ${{ secrets.PROJECT }} \
-            --instance ${{ secrets.INSTANCE }} \
-            --cluster-type aks \
-            --newrelic-otlp-endpoint ${{ secrets.NEWRELIC_OTLP_ENDPOINT }} \
-            --newrelic-opsteam-license-key ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }}
+          bash ./infra/helm/mysql/deploy.sh
 
       - name: Logout of Azure
         id: logout_from_azure
