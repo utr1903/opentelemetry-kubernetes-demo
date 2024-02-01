@@ -53,6 +53,7 @@ jobs:
           bash ./infra/helm/${{ inputs.application }}/deploy.sh \
             --project ${{ secrets.PROJECT }} \
             --instance ${{ secrets.INSTANCE }} \
+            --application ${{ inputs.application }} \
             --language ${{ inputs.language }}
 
       - name: Logout of Azure

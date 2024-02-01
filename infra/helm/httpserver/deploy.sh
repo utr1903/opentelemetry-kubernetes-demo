@@ -11,6 +11,10 @@ while (( "$#" )); do
       instance="${2}"
       shift
       ;;
+    --application)
+      application="${2}"
+      shift
+      ;;
     --language)
       language="${2}"
       shift
@@ -32,6 +36,12 @@ fi
 # Instance
 if [[ $instance == "" ]]; then
   echo -e "Instance [--instance] is not provided!\n"
+  exit 1
+fi
+
+# Application
+if [[ $application == "" ]]; then
+  echo -e "Application [--application] is not provided!\n"
   exit 1
 fi
 
@@ -91,4 +101,4 @@ helm upgrade ${httpserver[name]} \
   --set mysql.table=${mysql[table]} \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
-  "./chart"
+  "./infra/helm/${application}/${language}/chart"
