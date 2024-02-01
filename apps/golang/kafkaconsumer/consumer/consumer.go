@@ -115,7 +115,7 @@ func (k *KafkaConsumer) StartConsumerGroup(
 		return err
 	}
 
-	otelconsumer := otelkafka.New()
+	otelconsumer := otelkafka.NewKafkaConsumer()
 	handler := groupHandler{
 		ready:             make(chan bool),
 		Opts:              k.Opts,
