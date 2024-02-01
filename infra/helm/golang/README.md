@@ -1,3 +1,0 @@
-# Golang
-
-To be implemented...
