@@ -1,0 +1,53 @@
+name: New Relic Terraform deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        type: boolean
+        required: true
+        description: Flag to run terraform apply command. If yes, resources will be planned but won't applied.
+        default: false
+      destroy:
+        type: boolean
+        required: true
+        description: Flag to run terraform destroy command. If yes, resources will be destroyed.
+        default: false
+      stack:
+        type: choice
+        required: true
+        description: Stack type of the environment
+        options:
+          - infra
+
+jobs:
+  helm_deploy:
+    name: "Deploy ${{ inputs.stack }}"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        id: checkout_repo
+        uses: actions/checkout@v4
+
+      - name: Install Terraform
+        id: install_terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Deploy Terraform ${{ inputs.stack }}
+        id: deploy_terraform
+        run: |
+
+          stack=${{ inputs.stack }}
+
+          if [[ ${stack} == 'infra' ]]; then
+            bash ./monitoring/newrelic/${stack}/deploy.sh \
+              --project ${{ secrets.PROJECT }} \
+              --instance ${{ secrets.INSTANCE }} \
+              --cluster-type aks \
+              --newrelic-opsteam-account-id ${{ secrets.NEWRELIC_ACCOUNT_ID_OPSTEAM }} \
+              --newrelic-region ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }} \
+              --newrelic-user-api-key ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }} \
+              --dry-run ${{ inputs.dryRun }} \
+              --destroy ${{ inputs.destroy }}
+          fi
