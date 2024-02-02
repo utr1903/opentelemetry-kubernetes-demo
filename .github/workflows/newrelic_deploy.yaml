@@ -21,7 +21,7 @@ on:
           - infra
 
 jobs:
-  helm_deploy:
+  terraform_deploy:
     name: "Deploy ${{ inputs.stack }}"
     runs-on: ubuntu-latest
 
