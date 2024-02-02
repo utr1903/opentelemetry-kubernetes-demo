@@ -5,11 +5,13 @@ on:
     inputs:
       language:
         type: choice
+        required: true
         description: Name of the programming language
         options:
           - golang
       application:
         type: choice
+        required: true
         description: Name of the application
         options:
           - httpserver

@@ -1,4 +1,4 @@
-name: Helm OTel collector deployment
+name: Helm deployment
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ on:
 
 jobs:
   helm_deploy:
-    name: "Deploy OTel collector"
+    name: "Deploy ${{ inputs.chart }}"
     runs-on: ubuntu-latest
 
     steps:
@@ -62,15 +62,19 @@ jobs:
         id: deploy_helm_chart
         run: |
 
-          if [[ ${{ inputs.language }} != '' ]]; then
-            bash ./infra/helm/${{ inputs.chart }}/deploy.sh \
+          chart=${{ inputs.chart }}
+          language=${{ inputs.language }}
+
+          if [[ ${language} != '' ]]; then
+            bash ./infra/helm/${chart}/deploy.sh \
+              --github-actor ${{ github.actor }} \
               --project ${{ secrets.PROJECT }} \
               --instance ${{ secrets.INSTANCE }} \
-              --application ${{ inputs.chart }} \
-              --language ${{ inputs.language }}
+              --application ${chart} \
+              --language ${language}
 
-          elif [[ ${{ inputs.chart }} == 'otelcollector' ]]; then
-            bash ./infra/helm/${{ inputs.chart }}/deploy.sh \
+          elif [[ ${chart} == 'otelcollector' ]]; then
+            bash ./infra/helm/${chart}/deploy.sh \
               --project ${{ secrets.PROJECT }} \
               --instance ${{ secrets.INSTANCE }} \
               --cluster-type aks \
@@ -78,7 +82,7 @@ jobs:
               --newrelic-opsteam-license-key ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }}
 
           else
-            bash ./infra/helm/${{ inputs.chart }}/deploy.sh
+            bash ./infra/helm/${chart}/deploy.sh
           fi
 
       - name: Logout of Azure

@@ -3,6 +3,10 @@
 # Get commandline arguments
 while (( "$#" )); do
   case "$1" in
+    --github-actor)
+      githubActor="${2}"
+      shift
+      ;;
     --project)
       project="${2}"
       shift
@@ -74,7 +78,7 @@ httpserver["port"]=8080
 # simulator
 declare -A simulator
 simulator["name"]="simulator"
-simulator["imageName"]="ghcr.io/utr1903/${project}-${simulator[name]}-${language}:latest"
+simulator["imageName"]="ghcr.io/${githubActor}/${project}-${simulator[name]}-${language}:latest"
 simulator["namespace"]="${language}"
 simulator["replicas"]=3
 simulator["port"]=8080
