@@ -16,19 +16,12 @@ type Logger struct {
 func NewLogger(
 	serviceName string,
 ) *Logger {
-
-	// Instantiate logger
-	logger := logrus.New()
-
-	// Set log level
-	logger.SetLevel(logrus.InfoLevel)
-
-	// Set formatter
-	logger.SetFormatter(&logrus.JSONFormatter{})
-
 	return &Logger{
 		serviceName: serviceName,
-		logger:      logger,
+		logger: &logrus.Logger{
+			Formatter: new(logrus.JSONFormatter),
+			Level:     logrus.InfoLevel,
+		},
 	}
 }
 
