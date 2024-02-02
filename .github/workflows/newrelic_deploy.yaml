@@ -46,8 +46,8 @@ jobs:
               --instance ${{ secrets.INSTANCE }} \
               --cluster-type aks \
               --newrelic-opsteam-account-id ${{ secrets.NEWRELIC_ACCOUNT_ID_OPSTEAM }} \
-              --newrelic-region ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }} \
-              --newrelic-user-api-key ${{ secrets.NEWRELIC_LICENSE_KEY_OPSTEAM }} \
+              --newrelic-region ${{ secrets.NEWRELIC_REGION }} \
+              --newrelic-user-api-key ${{ secrets.NEWRELIC_USER_API_KEY }} \
               --dry-run ${{ inputs.dryRun }} \
               --destroy ${{ inputs.destroy }}
           fi
