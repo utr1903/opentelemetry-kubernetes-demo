@@ -27,7 +27,7 @@ on:
 
 jobs:
   helm_deploy:
-    name: "Deploy OTel collector"
+    name: "Deploy ${{ inputs.chart }}"
     runs-on: ubuntu-latest
 
     steps:
