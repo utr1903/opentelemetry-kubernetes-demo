@@ -7,22 +7,26 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-var serviceName string
+type Logger struct {
+	serviceName string
+	logger      *logrus.Logger
+}
 
 // Creates new logger
 func NewLogger(
 	serviceName string,
-) {
-
-	// Set log level
-	logrus.SetLevel(logrus.InfoLevel)
-
-	// Set formatter
-	logrus.SetFormatter(&logrus.JSONFormatter{})
+) *Logger {
+	l := logrus.New()
+	l.SetLevel(logrus.InfoLevel)
+	l.SetFormatter(&logrus.JSONFormatter{})
+	return &Logger{
+		serviceName: serviceName,
+		logger:      l,
+	}
 }
 
 // Logs a message with trace context
-func Log(
+func (l *Logger) Log(
 	lvl logrus.Level,
 	ctx context.Context,
 	user string,
@@ -30,12 +34,15 @@ func Log(
 ) {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().HasTraceID() && span.SpanContext().HasSpanID() {
-		logrus.WithFields(logrus.Fields{
-			"service.name": serviceName,
+		l.logger.WithFields(logrus.Fields{
+			"user":         user,
+			"service.name": l.serviceName,
 			"trace.id":     span.SpanContext().TraceID().String(),
 			"span.id":      span.SpanContext().SpanID().String(),
-		}).Log(lvl, "user:"+user+"|message:"+msg)
+		}).Log(lvl, msg)
 	} else {
-		logrus.WithFields(logrus.Fields{}).Log(lvl, "user:"+user+"|message:"+msg)
+		l.logger.WithFields(logrus.Fields{
+			"user": user,
+		}).Log(lvl, msg)
 	}
 }

@@ -21,11 +21,9 @@ type HttpServerConfig struct {
 	MysqlPort     string
 }
 
-var cfg *HttpServerConfig
-
 // Creates new config object by parsing environment variables
-func NewConfig() {
-	cfg = &HttpServerConfig{
+func NewConfig() *HttpServerConfig {
+	return &HttpServerConfig{
 		ServiceName: os.Getenv("OTEL_SERVICE_NAME"),
 		ServicePort: os.Getenv("APP_PORT"),
 
@@ -36,9 +34,4 @@ func NewConfig() {
 		MysqlTable:    os.Getenv("MYSQL_TABLE"),
 		MysqlPort:     os.Getenv("MYSQL_PORT"),
 	}
-}
-
-// Returns instantiated config object
-func GetConfig() *HttpServerConfig {
-	return cfg
 }
