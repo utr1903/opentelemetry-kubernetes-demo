@@ -37,6 +37,7 @@ func defaultOpts() *Opts {
 }
 
 type KafkaConsumer struct {
+	logger            *logger.Logger
 	Opts              *Opts
 	MySql             *mysql.MySqlDatabase
 	MySqlOtelEnricher *otelmysql.MySqlEnricher
@@ -44,6 +45,7 @@ type KafkaConsumer struct {
 
 // Create a kafka consumer instance
 func New(
+	log *logger.Logger,
 	db *mysql.MySqlDatabase,
 	optFuncs ...OptFunc,
 ) *KafkaConsumer {
@@ -57,7 +59,8 @@ func New(
 	}
 
 	return &KafkaConsumer{
-		MySql: db,
+		logger: log,
+		MySql:  db,
 		MySqlOtelEnricher: otelmysql.NewMysqlEnricher(
 			otelmysql.WithTracerName(CONSUMER),
 			otelmysql.WithServer(db.Opts.Server),
@@ -117,6 +120,7 @@ func (k *KafkaConsumer) StartConsumerGroup(
 
 	otelconsumer := otelkafka.NewKafkaConsumer()
 	handler := groupHandler{
+		logger:            k.logger,
 		ready:             make(chan bool),
 		Opts:              k.Opts,
 		MySql:             k.MySql,
@@ -158,6 +162,7 @@ func (k *KafkaConsumer) StartConsumerGroup(
 }
 
 type groupHandler struct {
+	logger            *logger.Logger
 	ready             chan bool
 	Opts              *Opts
 	MySql             *mysql.MySqlDatabase
@@ -203,18 +208,18 @@ func (g *groupHandler) consumeMessage(
 	// Parse name out of the message
 	name := string(msg.Value)
 
-	logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
+	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
 
 	// Store it into db
 	err := g.storeIntoDb(ctx, name)
 	if err != nil {
-		logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
+		g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
 		return nil
 	}
 
 	// Acknowledge message
 	session.MarkMessage(msg, "")
-	logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
+	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
 
 	return nil
 }
@@ -224,7 +229,7 @@ func (g *groupHandler) storeIntoDb(
 	name string,
 ) error {
 
-	logger.Log(logrus.InfoLevel, ctx, name, "Storing into DB...")
+	g.logger.Log(logrus.InfoLevel, ctx, name, "Storing into DB...")
 
 	// Build db query
 	dbOperation := "INSERT"
@@ -244,7 +249,7 @@ func (g *groupHandler) storeIntoDb(
 	stmt, err := g.MySql.Instance.Prepare(dbStatement)
 	if err != nil {
 		msg := "Preparing DB statement is failed."
-		logger.Log(logrus.ErrorLevel, ctx, name, msg)
+		g.logger.Log(logrus.ErrorLevel, ctx, name, msg)
 
 		// Add error to span
 		g.addErrorToSpan(dbSpan, msg, err)
@@ -257,7 +262,7 @@ func (g *groupHandler) storeIntoDb(
 	_, err = stmt.Exec(name)
 	if err != nil {
 		msg := "Storing into DB is failed."
-		logger.Log(logrus.ErrorLevel, ctx, name, msg)
+		g.logger.Log(logrus.ErrorLevel, ctx, name, msg)
 
 		// Add error to span
 		g.addErrorToSpan(dbSpan, msg, err)
@@ -265,7 +270,7 @@ func (g *groupHandler) storeIntoDb(
 		return err
 	}
 
-	logger.Log(logrus.InfoLevel, ctx, name, "Storing into DB is succeeded.")
+	g.logger.Log(logrus.InfoLevel, ctx, name, "Storing into DB is succeeded.")
 	return nil
 }
 

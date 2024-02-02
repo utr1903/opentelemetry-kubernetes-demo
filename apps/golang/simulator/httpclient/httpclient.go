@@ -43,6 +43,7 @@ func defaultOpts() *Opts {
 }
 
 type HttpServerSimulator struct {
+	logger     *logger.Logger
 	Opts       *Opts
 	Client     *otelhttp.HttpClient
 	Randomizer *rand.Rand
@@ -50,6 +51,7 @@ type HttpServerSimulator struct {
 
 // Create an HTTP server simulator instance
 func New(
+	log *logger.Logger,
 	optFuncs ...OptFunc,
 ) *HttpServerSimulator {
 
@@ -68,6 +70,7 @@ func New(
 	randomizer := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	return &HttpServerSimulator{
+		logger:     log,
 		Opts:       opts,
 		Client:     httpClient,
 		Randomizer: randomizer,
@@ -168,7 +171,7 @@ func (h *HttpServerSimulator) performHttpCall(
 	reqParams map[string]string,
 ) error {
 
-	logger.Log(logrus.InfoLevel, ctx, user, "Preparing HTTP call...")
+	h.logger.Log(logrus.InfoLevel, ctx, user, "Preparing HTTP call...")
 
 	// Create HTTP request with trace context
 	req, err := http.NewRequest(
@@ -177,7 +180,7 @@ func (h *HttpServerSimulator) performHttpCall(
 		nil,
 	)
 	if err != nil {
-		logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
+		h.logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
 		return err
 	}
 
@@ -192,15 +195,15 @@ func (h *HttpServerSimulator) performHttpCall(
 	}
 	if len(qps) > 0 {
 		req.URL.RawQuery = qps.Encode()
-		logger.Log(logrus.InfoLevel, ctx, user, "Request params->"+req.URL.RawQuery)
+		h.logger.Log(logrus.InfoLevel, ctx, user, "Request params->"+req.URL.RawQuery)
 	}
-	logger.Log(logrus.InfoLevel, ctx, user, "HTTP call is prepared.")
+	h.logger.Log(logrus.InfoLevel, ctx, user, "HTTP call is prepared.")
 
 	// Perform HTTP request
-	logger.Log(logrus.InfoLevel, ctx, user, "Performing HTTP call")
+	h.logger.Log(logrus.InfoLevel, ctx, user, "Performing HTTP call")
 	res, err := h.Client.Do(ctx, req, fmt.Sprintf("HTTP %s", req.Method))
 	if err != nil {
-		logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
+		h.logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
 		return err
 	}
 	defer res.Body.Close()
@@ -208,16 +211,16 @@ func (h *HttpServerSimulator) performHttpCall(
 	// Read HTTP response
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
+		h.logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
 		return err
 	}
 
 	// Check status code
 	if res.StatusCode != http.StatusOK {
-		logger.Log(logrus.ErrorLevel, ctx, user, string(resBody))
+		h.logger.Log(logrus.ErrorLevel, ctx, user, string(resBody))
 		return errors.New("call to donald returned not ok status")
 	}
 
-	logger.Log(logrus.InfoLevel, ctx, user, "HTTP call is performed successfully.")
+	h.logger.Log(logrus.InfoLevel, ctx, user, "HTTP call is performed successfully.")
 	return nil
 }

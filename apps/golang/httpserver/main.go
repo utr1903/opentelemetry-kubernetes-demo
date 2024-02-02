@@ -20,7 +20,7 @@ func main() {
 	cfg := config.GetConfig()
 
 	// Initialize logger
-	logger.NewLogger(cfg.ServiceName)
+	log := logger.NewLogger(cfg.ServiceName)
 
 	// Get context
 	ctx := context.Background()
@@ -49,7 +49,7 @@ func main() {
 	defer db.Instance.Close()
 
 	// Instantiate server
-	server := server.New(db)
+	server := server.New(log, db)
 
 	// Serve
 	http.Handle("/api", otelhttp.NewHandler(http.HandlerFunc(server.Handler), "api"))

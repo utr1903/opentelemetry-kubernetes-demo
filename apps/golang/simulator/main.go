@@ -20,7 +20,7 @@ func main() {
 	cfg := config.NewConfig()
 
 	// Initialize logger
-	logger.NewLogger(cfg.ServiceName)
+	log := logger.NewLogger(cfg.ServiceName)
 
 	// Create tracer provider
 	tp := otel.NewTraceProvider(ctx)
@@ -34,8 +34,8 @@ func main() {
 	otel.StartCollectingRuntimeMetrics()
 
 	// Simulate
-	go simulateHttpServer(cfg)
-	go simulateKafkaConsumer(cfg)
+	go simulateHttpServer(cfg, log)
+	go simulateKafkaConsumer(cfg, log)
 
 	// Wait for signal to shutdown the simulator
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -46,9 +46,11 @@ func main() {
 
 func simulateHttpServer(
 	cfg *config.SimulatorConfig,
+	log *logger.Logger,
 ) {
 	// Instantiate HTTP server simulator
 	httpserverSimulator := httpclient.New(
+		log,
 		httpclient.WithServiceName(cfg.ServiceName),
 		httpclient.WithRequestInterval(cfg.HttpserverRequestInterval),
 		httpclient.WithServerEndpoint(cfg.HttpserverEndpoint),
@@ -61,9 +63,11 @@ func simulateHttpServer(
 
 func simulateKafkaConsumer(
 	cfg *config.SimulatorConfig,
+	log *logger.Logger,
 ) {
 	// Instantiate Kafka consumer simulator
 	kafkaConsumerSimulator := kafkaproducer.New(
+		log,
 		kafkaproducer.WithServiceName(cfg.ServiceName),
 		kafkaproducer.WithRequestInterval(cfg.KafkaRequestInterval),
 		kafkaproducer.WithBrokerAddress(cfg.KafkaBrokerAddress),

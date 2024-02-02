@@ -32,12 +32,14 @@ func defaultOpts() *Opts {
 }
 
 type KafkaConsumerSimulator struct {
+	logger     *logger.Logger
 	Opts       *Opts
 	Randomizer *rand.Rand
 }
 
 // Create an kafka consumer simulator instance
 func New(
+	log *logger.Logger,
 	optFuncs ...OptFunc,
 ) *KafkaConsumerSimulator {
 
@@ -52,6 +54,7 @@ func New(
 	randomizer := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	return &KafkaConsumerSimulator{
+		logger:     log,
 		Opts:       opts,
 		Randomizer: randomizer,
 	}
@@ -157,9 +160,9 @@ func (k *KafkaConsumerSimulator) publishMessages(
 			ctx := context.Background()
 
 			// Publish message
-			logger.Log(logrus.InfoLevel, ctx, user, "Publishing message...")
+			k.logger.Log(logrus.InfoLevel, ctx, user, "Publishing message...")
 			otelproducer.Publish(ctx, &msg)
-			logger.Log(logrus.InfoLevel, ctx, user, "Message published successfully.")
+			k.logger.Log(logrus.InfoLevel, ctx, user, "Message published successfully.")
 		}()
 	}
 }

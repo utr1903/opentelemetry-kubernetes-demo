@@ -20,12 +20,14 @@ import (
 const SERVER string = "httpserver"
 
 type Server struct {
+	logger            *logger.Logger
 	MySql             *mysql.MySqlDatabase
 	MySqlOtelEnricher *otelmysql.MySqlEnricher
 }
 
 // Create a HTTP server instance
 func New(
+	log *logger.Logger,
 	db *mysql.MySqlDatabase,
 ) *Server {
 
@@ -58,7 +60,7 @@ func (s *Server) Readyz(
 ) {
 	err := s.MySql.Instance.Ping()
 	if err != nil {
-		logger.Log(logrus.ErrorLevel, r.Context(), "", err.Error())
+		s.logger.Log(logrus.ErrorLevel, r.Context(), "", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Not OK"))
 	} else {
@@ -77,7 +79,7 @@ func (s *Server) Handler(
 	parentSpan := trace.SpanFromContext(r.Context())
 	defer parentSpan.End()
 
-	logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Handler is triggered")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Handler is triggered")
 
 	// Perform database query
 	err := s.performQuery(w, r, parentSpan)
@@ -118,7 +120,7 @@ func (s *Server) performQuery(
 	err = s.executeDbQuery(ctx, r, dbStatement)
 	if err != nil {
 		msg := "Executing DB query is failed."
-		logger.Log(logrus.ErrorLevel, ctx, user, msg)
+		s.logger.Log(logrus.ErrorLevel, ctx, user, msg)
 
 		// Add error to span
 		s.addErrorToSpan(dbSpan, msg, err)
@@ -131,7 +133,7 @@ func (s *Server) performQuery(
 	databaseConnectionError := r.URL.Query().Get("databaseConnectionError")
 	if databaseConnectionError == "true" {
 		msg := "Connection to database is lost."
-		logger.Log(logrus.ErrorLevel, ctx, user, msg)
+		s.logger.Log(logrus.ErrorLevel, ctx, user, msg)
 
 		// Add error to span
 		s.addErrorToSpan(dbSpan, msg, err)
@@ -151,7 +153,7 @@ func (s *Server) createDbQuery(
 	string,
 	error,
 ) {
-	logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Building query...")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Building query...")
 
 	var dbOperation string
 	var dbStatement string
@@ -172,11 +174,11 @@ func (s *Server) createDbQuery(
 		dbOperation = "DELETE"
 		dbStatement = dbOperation + " FROM " + s.MySql.Opts.Table
 	default:
-		logger.Log(logrus.ErrorLevel, r.Context(), s.getUser(r), "Method is not allowed.")
+		s.logger.Log(logrus.ErrorLevel, r.Context(), s.getUser(r), "Method is not allowed.")
 		return "", "", errors.New("method not allowed")
 	}
 
-	logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Query is built.")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Query is built.")
 	return dbOperation, dbStatement, nil
 }
 
@@ -188,14 +190,14 @@ func (s *Server) executeDbQuery(
 ) error {
 
 	user := s.getUser(r)
-	logger.Log(logrus.InfoLevel, ctx, user, "Executing query...")
+	s.logger.Log(logrus.InfoLevel, ctx, user, "Executing query...")
 
 	switch r.Method {
 	case http.MethodGet:
 		// Perform a query
 		rows, err := s.MySql.Instance.Query(dbStatement)
 		if err != nil {
-			logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
+			s.logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
 			return err
 		}
 		defer rows.Close()
@@ -206,7 +208,7 @@ func (s *Server) executeDbQuery(
 			var name string
 			err = rows.Scan(&name)
 			if err != nil {
-				logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
+				s.logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
 				return err
 			}
 			names = append(names, name)
@@ -214,21 +216,21 @@ func (s *Server) executeDbQuery(
 
 		_, err = json.Marshal(names)
 		if err != nil {
-			logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
+			s.logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
 			return err
 		}
 	case http.MethodDelete:
 		_, err := s.MySql.Instance.Exec(dbStatement)
 		if err != nil {
-			logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
+			s.logger.Log(logrus.ErrorLevel, ctx, user, err.Error())
 			return err
 		}
 	default:
-		logger.Log(logrus.ErrorLevel, ctx, user, "Method is not allowed.")
+		s.logger.Log(logrus.ErrorLevel, ctx, user, "Method is not allowed.")
 		return errors.New("method not allowed")
 	}
 
-	logger.Log(logrus.InfoLevel, ctx, user, "Query is executed.")
+	s.logger.Log(logrus.InfoLevel, ctx, user, "Query is executed.")
 	return nil
 }
 
@@ -269,16 +271,16 @@ func (s *Server) produceSchemaNotFoundInCacheWarning(
 	ctx context.Context,
 	r *http.Request,
 ) {
-	logger.Log(logrus.InfoLevel, ctx, s.getUser(r), "Postprocessing...")
+	s.logger.Log(logrus.InfoLevel, ctx, s.getUser(r), "Postprocessing...")
 	schemaNotFoundInCacheWarning := r.URL.Query().Get("schemaNotFoundInCacheWarning")
 	if schemaNotFoundInCacheWarning == "true" {
 		user := s.getUser(r)
-		logger.Log(logrus.WarnLevel, ctx, user, "Processing schema not found in cache. Calculating from scratch.")
+		s.logger.Log(logrus.WarnLevel, ctx, user, "Processing schema not found in cache. Calculating from scratch.")
 		time.Sleep(time.Millisecond * 500)
 	} else {
 		time.Sleep(time.Millisecond * 10)
 	}
-	logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Postprocessing is complete.")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Postprocessing is complete.")
 }
 
 func (s *Server) getUser(

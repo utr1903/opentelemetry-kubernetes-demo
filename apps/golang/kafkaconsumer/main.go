@@ -20,7 +20,7 @@ func main() {
 	cfg := config.GetConfig()
 
 	// Initialize logger
-	logger.NewLogger(cfg.ServiceName)
+	log := logger.NewLogger(cfg.ServiceName)
 
 	// Get context
 	ctx := context.Background()
@@ -52,7 +52,7 @@ func main() {
 	defer cancel()
 
 	// Instantiate Kafka consumer
-	kafkaConsumer := consumer.New(db,
+	kafkaConsumer := consumer.New(log, db,
 		consumer.WithServiceName(cfg.ServiceName),
 		consumer.WithBrokerAddress(cfg.KafkaBrokerAddress),
 		consumer.WithBrokerTopic(cfg.KafkaTopic),
