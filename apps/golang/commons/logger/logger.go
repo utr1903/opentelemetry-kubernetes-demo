@@ -34,14 +34,14 @@ func (l *Logger) Log(
 ) {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().HasTraceID() && span.SpanContext().HasSpanID() {
-		logrus.WithFields(logrus.Fields{
+		l.logger.WithFields(logrus.Fields{
 			"user":         user,
 			"service.name": l.serviceName,
 			"trace.id":     span.SpanContext().TraceID().String(),
 			"span.id":      span.SpanContext().SpanID().String(),
 		}).Log(lvl, msg)
 	} else {
-		logrus.WithFields(logrus.Fields{
+		l.logger.WithFields(logrus.Fields{
 			"user": user,
 		}).Log(lvl, msg)
 	}
