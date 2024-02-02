@@ -32,7 +32,8 @@ func New(
 ) *Server {
 
 	return &Server{
-		MySql: db,
+		logger: log,
+		MySql:  db,
 		MySqlOtelEnricher: otelmysql.NewMysqlEnricher(
 			otelmysql.WithTracerName(SERVER),
 			otelmysql.WithServer(db.Opts.Server),
