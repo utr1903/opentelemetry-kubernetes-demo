@@ -3,6 +3,10 @@
 # Get commandline arguments
 while (( "$#" )); do
   case "$1" in
+    --github-actor)
+      githubActor="${2}"
+      shift
+      ;;
     --project)
       project="${2}"
       shift
@@ -72,7 +76,7 @@ otelcollectors["endpoint"]="http://${otelcollectors[name]}-dep-rec-collector-hea
 # httpserver
 declare -A httpserver
 httpserver["name"]="httpserver"
-httpserver["imageName"]="ghcr.io/utr1903/${project}-${httpserver[name]}-${language}:latest"
+httpserver["imageName"]="ghcr.io/${githubActor}/${project}-${httpserver[name]}-${language}:latest"
 httpserver["namespace"]="${language}"
 httpserver["replicas"]=2
 httpserver["port"]=8080

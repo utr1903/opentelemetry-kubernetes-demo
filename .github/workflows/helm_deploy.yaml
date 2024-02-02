@@ -67,6 +67,7 @@ jobs:
 
           if [[ ${language} != '' ]]; then
             bash ./infra/helm/${chart}/deploy.sh \
+              --github-actor ${{ github.actor }} \
               --project ${{ secrets.PROJECT }} \
               --instance ${{ secrets.INSTANCE }} \
               --application ${chart} \

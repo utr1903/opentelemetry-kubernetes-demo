@@ -3,6 +3,10 @@
 # Get commandline arguments
 while (( "$#" )); do
   case "$1" in
+    --github-actor)
+      githubActor="${2}"
+      shift
+      ;;
     --project)
       project="${2}"
       shift
@@ -78,7 +82,7 @@ otelcollectors["endpoint"]="http://${otelcollectors[name]}-dep-rec-collector-hea
 # kafkaconsumer
 declare -A kafkaconsumer
 kafkaconsumer["name"]="kafkaconsumer"
-kafkaconsumer["imageName"]="ghcr.io/utr1903/${project}-${kafkaconsumer[name]}-${language}:latest"
+kafkaconsumer["imageName"]="ghcr.io/${githubActor}/${project}-${kafkaconsumer[name]}-${language}:latest"
 kafkaconsumer["namespace"]="${language}"
 kafkaconsumer["replicas"]=2
 
