@@ -16,8 +16,7 @@ import (
 func main() {
 
 	// Create new config
-	config.NewConfig()
-	cfg := config.GetConfig()
+	cfg := config.NewConfig()
 
 	// Initialize logger
 	log := logger.NewLogger(cfg.ServiceName)

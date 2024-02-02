@@ -26,11 +26,9 @@ type KafkaConsumerConfig struct {
 	MysqlPort     string
 }
 
-var cfg *KafkaConsumerConfig
-
 // Creates new config object by parsing environment variables
-func NewConfig() {
-	cfg = &KafkaConsumerConfig{
+func NewConfig() *KafkaConsumerConfig {
+	return &KafkaConsumerConfig{
 		ServiceName: os.Getenv("OTEL_SERVICE_NAME"),
 		ServicePort: os.Getenv("APP_PORT"),
 
@@ -45,9 +43,4 @@ func NewConfig() {
 		MysqlTable:    os.Getenv("MYSQL_TABLE"),
 		MysqlPort:     os.Getenv("MYSQL_PORT"),
 	}
-}
-
-// Returns instantiated config object
-func GetConfig() *KafkaConsumerConfig {
-	return cfg
 }
