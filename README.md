@@ -46,19 +46,12 @@ apps/
     Dockerfile
 infra/
   helm/
-    <applications>/
+    <charts>/
       chart/
       deploy.sh
 ```
 
-`<application>` stands for:
-
-- simulator
-- httpserver
-- simulator
-- (commons library)
-
-`<language>` stands for:
+`<languages>` stands for:
 
 - [.NET](./apps/dotnet/) (to be implemented)
 - [Golang](./apps/golang/)
@@ -66,4 +59,22 @@ infra/
 - [Javascript](./apps/javascript/) (to be implemented)
 - [Python](./apps/python/) (to be implemented)
 
-How the applications are build/pushed and deployed to the cluster can be found [here](/infra/helm/README.md)!
+`<applications>` stands for:
+
+- (commons library)
+- httpserver
+- kafkaconsumer
+- simulator
+
+`<charts>` stands for:
+
+- [cert-manager](/infra/helm/cert-manager)
+- [httpserver](/infra/helm/httpserver/)
+- [kafka](/infra/helm/kafka/)
+- [kafkaconsumer](/infra/helm/kafkaconsumer/)
+- [mysql](/infra/helm/mysql/)
+- [otelcollector](/infra/helm/otelcollector/)
+- [oteloperator](/infra/helm/oteloperator/)
+- [simulator](/infra/helm/simulator/)
+
+How the applications are to be build/pushed and deployed to the cluster can be found [here](/infra/helm/README.md)!
