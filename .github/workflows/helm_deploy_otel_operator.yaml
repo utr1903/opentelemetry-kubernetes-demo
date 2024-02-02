@@ -39,7 +39,7 @@ jobs:
       - name: Deploy Helm chart
         id: deploy_helm_chart
         run: |
-          bash ./infra/helm/otel/operator/deploy.sh
+          bash ./infra/helm/oteloperator/deploy.sh
 
       - name: Logout of Azure
         id: logout_from_azure
