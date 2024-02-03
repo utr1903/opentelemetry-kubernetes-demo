@@ -24,9 +24,9 @@ on:
         type: choice
         required: false
         description: Programming language
-        default: ''
+        default: ""
         options:
-          - ''
+          - ""
           - golang
 
 jobs:
@@ -59,15 +59,18 @@ jobs:
               --newrelic-user-api-key ${{ secrets.NEWRELIC_USER_API_KEY }} \
               --dry-run ${{ inputs.dryRun }} \
               --destroy ${{ inputs.destroy }}
-          elif
-          bash ./monitoring/newrelic/${stack}/deploy.sh \
-            --project ${{ secrets.PROJECT }} \
-            --instance ${{ secrets.INSTANCE }} \
-            --cluster-type aks \
-            --newrelic-opsteam-account-id ${{ secrets.NEWRELIC_ACCOUNT_ID_OPSTEAM }} \
-            --newrelic-region ${{ secrets.NEWRELIC_REGION }} \
-            --newrelic-user-api-key ${{ secrets.NEWRELIC_USER_API_KEY }} \
-            --language ${{ inputs.language }} \
-            --dry-run ${{ inputs.dryRun }} \
-            --destroy ${{ inputs.destroy }}
+          elif [[ ${stack} == 'apps' ]]; then
+            bash ./monitoring/newrelic/${stack}/deploy.sh \
+              --project ${{ secrets.PROJECT }} \
+              --instance ${{ secrets.INSTANCE }} \
+              --cluster-type aks \
+              --newrelic-opsteam-account-id ${{ secrets.NEWRELIC_ACCOUNT_ID_OPSTEAM }} \
+              --newrelic-region ${{ secrets.NEWRELIC_REGION }} \
+              --newrelic-user-api-key ${{ secrets.NEWRELIC_USER_API_KEY }} \
+              --language ${{ inputs.language }} \
+              --dry-run ${{ inputs.dryRun }} \
+              --destroy ${{ inputs.destroy }}
+          else
+            echo "Given stack is incorrect!"
+            exit 1
           fi
