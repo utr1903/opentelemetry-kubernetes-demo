@@ -27,6 +27,10 @@ while (( "$#" )); do
       newrelicRegion="${2}"
       shift
       ;;
+    --language)
+      language="${2}"
+      shift
+      ;;
     --dry-run)
       flagDryRun="${2}"
       shift
