@@ -25,7 +25,7 @@ resource "newrelic_one_dashboard" "simulator" {
         width  = 4
         height = 3
 
-        text = "## Go routines\n\nThe following metric is considered:\n\n- Number of goroutines that currently exist\n - `process.runtime.go.goroutines`"
+        text = "## Go routines\n\nThe following metric is considered:\n\n- Number of goroutines that currently exist\n   - `process.runtime.go.goroutines`"
       }
 
       # Average number of Go routines across all instances

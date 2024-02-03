@@ -92,7 +92,7 @@ resource "newrelic_one_dashboard" "httpserver" {
         width  = 4
         height = 3
 
-        text = "## Garbage collection cycles\n\nThe following metric is considered:\n\n- Number of completed garbage collection cycles\n - `process.runtime.go.gc.count`"
+        text = "## Garbage collection cycles\n\nThe following metric is considered:\n\n- Number of completed garbage collection cycles\n   - `process.runtime.go.gc.count`"
       }
 
       # Average number of garbage collection cycle across all instances
