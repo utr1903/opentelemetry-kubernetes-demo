@@ -93,7 +93,7 @@ if [[ $language == "" ]]; then
   echo "Language [--language] is not given."
   exit 1
 else
-  if [[ $language != "aks" ]]; then
+  if [[ $language != "golang" ]]; then
     echo "Given language [--language] is not supported. Supported values are: golang."
     exit 1
   fi
