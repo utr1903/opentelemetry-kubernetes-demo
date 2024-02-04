@@ -200,9 +200,9 @@ func (g *groupHandler) consumeMessage(
 	msg *sarama.ConsumerMessage,
 ) error {
 
-	// Create consumer span (parent)
+	// Create Kafka consume telemetry context
 	ctx := context.Background()
-	ctx, endConsume := g.Consumer.Intercept(ctx, msg, g.Opts.ConsumerGroupId)
+	ctx, kctCtx := g.Consumer.Intercept(ctx, msg, g.Opts.ConsumerGroupId)
 
 	// Parse name out of the message
 	name := string(msg.Value)
@@ -213,7 +213,7 @@ func (g *groupHandler) consumeMessage(
 	err := g.storeIntoDb(ctx, name)
 	if err != nil {
 		g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
-		endConsume(err)
+		kctCtx.End(err)
 		return nil
 	}
 
@@ -221,7 +221,7 @@ func (g *groupHandler) consumeMessage(
 	session.MarkMessage(msg, "")
 	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
 
-	endConsume(nil)
+	kctCtx.End(nil)
 	return nil
 }
 

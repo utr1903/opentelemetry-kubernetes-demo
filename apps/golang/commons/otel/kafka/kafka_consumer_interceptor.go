@@ -58,9 +58,15 @@ func (k *KafkaConsumer) Intercept(
 	consumerGroup string,
 ) (
 	context.Context,
-	func(err error),
+	*KafkaConsumeTelemetryContext,
 ) {
-	consumeStartTime := time.Now()
+	// Instantiate Kafka consume telemetry context
+	kctCtx := &KafkaConsumeTelemetryContext{
+		startTime:     time.Now(),
+		latency:       k.latency,
+		msg:           msg,
+		consumerGroup: consumerGroup,
+	}
 
 	// Get tracing info from message
 	headers := propagation.MapCarrier{}
@@ -81,25 +87,35 @@ func (k *KafkaConsumer) Intercept(
 		trace.WithAttributes(spanAttrs...),
 	)
 
-	time.Sleep(time.Millisecond * 50)
-	k.latency.Record(ctx, float64(time.Millisecond*50))
+	// Add context and started span to Kafka consume telemetry context
+	kctCtx.ctx = ctx
+	kctCtx.span = span
 
-	// Record consumer latency
-	endConsume := func(
-		err error,
-	) {
-		elapsedTime := float64(time.Since(consumeStartTime)) / float64(time.Millisecond)
-		fmt.Println(elapsedTime)
-		attrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
-		if err != nil {
-			attrs = append(attrs, semconv.ErrorType.String(err.Error()))
-		}
-		// k.latency.Record(ctx, elapsedTime,
-		// 	metric.WithAttributes(
-		// 		attrs...,
-		// 	))
-		span.End()
+	return ctx, kctCtx
+}
+
+type KafkaConsumeTelemetryContext struct {
+	startTime     time.Time
+	latency       metric.Float64Histogram
+	msg           *sarama.ConsumerMessage
+	consumerGroup string
+
+	ctx  context.Context
+	span trace.Span
+}
+
+func (k *KafkaConsumeTelemetryContext) End(
+	err error,
+) {
+	elapsedTime := float64(time.Since(k.startTime)) / float64(time.Millisecond)
+
+	attrs := semconv.WithMessagingKafkaConsumerAttributes(k.msg, k.consumerGroup)
+	if err != nil {
+		attrs = append(attrs, semconv.ErrorType.String(err.Error()))
 	}
-
-	return ctx, endConsume
+	k.latency.Record(k.ctx, elapsedTime,
+		metric.WithAttributes(
+			attrs...,
+		))
+	k.span.End()
 }
