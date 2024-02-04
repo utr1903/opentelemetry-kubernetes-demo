@@ -81,19 +81,23 @@ func (k *KafkaConsumer) Intercept(
 		trace.WithAttributes(spanAttrs...),
 	)
 
+	time.Sleep(time.Millisecond * 50)
+	k.latency.Record(ctx, float64(time.Millisecond*50))
+
 	// Record consumer latency
 	endConsume := func(
 		err error,
 	) {
 		elapsedTime := float64(time.Since(consumeStartTime)) / float64(time.Millisecond)
+		fmt.Println(elapsedTime)
 		attrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
 		if err != nil {
 			attrs = append(attrs, semconv.ErrorType.String(err.Error()))
 		}
-		k.latency.Record(ctx, elapsedTime,
-			metric.WithAttributes(
-				attrs...,
-			))
+		// k.latency.Record(ctx, elapsedTime,
+		// 	metric.WithAttributes(
+		// 		attrs...,
+		// 	))
 		span.End()
 	}
 
