@@ -20,6 +20,8 @@ const (
 
 	ExceptionEscapedName = "exception.escaped"
 	ExceptionEscaped     = attribute.Key(ExceptionEscapedName)
+	ErrorTypeName        = "error.type"
+	ErrorType            = attribute.Key(ErrorTypeName)
 
 	NetworkProtocolVersionName = "network.protocol.version"
 	NetworkProtocolVersion     = attribute.Key(NetworkProtocolVersionName)
