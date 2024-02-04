@@ -203,7 +203,6 @@ func (g *groupHandler) consumeMessage(
 	// Create consumer span (parent)
 	ctx := context.Background()
 	ctx, endConsume := g.Consumer.Intercept(ctx, msg, g.Opts.ConsumerGroupId)
-	defer endConsume()
 
 	// Parse name out of the message
 	name := string(msg.Value)
@@ -214,6 +213,7 @@ func (g *groupHandler) consumeMessage(
 	err := g.storeIntoDb(ctx, name)
 	if err != nil {
 		g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
+		endConsume(err)
 		return nil
 	}
 
@@ -221,6 +221,7 @@ func (g *groupHandler) consumeMessage(
 	session.MarkMessage(msg, "")
 	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
 
+	endConsume(nil)
 	return nil
 }
 
