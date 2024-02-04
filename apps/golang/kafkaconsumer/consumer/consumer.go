@@ -202,26 +202,27 @@ func (g *groupHandler) consumeMessage(
 
 	// Create Kafka consume telemetry context
 	ctx := context.Background()
-	ctx, kctCtx := g.Consumer.Intercept(ctx, msg, g.Opts.ConsumerGroupId)
+	g.Consumer.Consume(ctx, msg, g.Opts.ConsumerGroupId,
+		func() error {
+			// Parse name out of the message
+			name := string(msg.Value)
 
-	// Parse name out of the message
-	name := string(msg.Value)
+			g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
 
-	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
+			// Store it into db
+			err := g.storeIntoDb(ctx, name)
+			if err != nil {
+				g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
+				return err
+			}
 
-	// Store it into db
-	err := g.storeIntoDb(ctx, name)
-	if err != nil {
-		g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
-		kctCtx.End(ctx, err)
-		return nil
-	}
+			// Acknowledge message
+			session.MarkMessage(msg, "")
+			g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
 
-	// Acknowledge message
-	session.MarkMessage(msg, "")
-	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
+			return nil
+		})
 
-	kctCtx.End(ctx, nil)
 	return nil
 }
 

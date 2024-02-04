@@ -52,21 +52,15 @@ func NewKafkaConsumer() *KafkaConsumer {
 	}
 }
 
-func (k *KafkaConsumer) Intercept(
+func (k *KafkaConsumer) Consume(
 	ctx context.Context,
 	msg *sarama.ConsumerMessage,
 	consumerGroup string,
-) (
-	context.Context,
-	*KafkaConsumeTelemetryContext,
+	consumeFunc func() error,
 ) {
-	// Instantiate Kafka consume telemetry context
-	kctCtx := &KafkaConsumeTelemetryContext{
-		startTime:     time.Now(),
-		latency:       k.latency,
-		msg:           msg,
-		consumerGroup: consumerGroup,
-	}
+
+	// Start timer
+	consumeStartTime := time.Now()
 
 	// Get tracing info from message
 	headers := propagation.MapCarrier{}
@@ -79,6 +73,7 @@ func (k *KafkaConsumer) Intercept(
 	ctx = propagator.Extract(ctx, headers)
 
 	spanAttrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
+	attrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
 
 	ctx, span := k.tracer.Start(
 		ctx,
@@ -86,37 +81,18 @@ func (k *KafkaConsumer) Intercept(
 		trace.WithSpanKind(trace.SpanKindConsumer),
 		trace.WithAttributes(spanAttrs...),
 	)
+	defer span.End()
 
-	// Add context and started span to Kafka consume telemetry context
-	kctCtx.ctx = ctx
-	kctCtx.span = span
-
-	return ctx, kctCtx
-}
-
-type KafkaConsumeTelemetryContext struct {
-	startTime     time.Time
-	latency       metric.Float64Histogram
-	msg           *sarama.ConsumerMessage
-	consumerGroup string
-
-	ctx  context.Context
-	span trace.Span
-}
-
-func (k *KafkaConsumeTelemetryContext) End(
-	ctx context.Context,
-	err error,
-) {
-	elapsedTime := float64(time.Since(k.startTime)) / float64(time.Millisecond)
-
-	attrs := semconv.WithMessagingKafkaConsumerAttributes(k.msg, k.consumerGroup)
+	// Run the actual consume function
+	err := consumeFunc()
 	if err != nil {
 		attrs = append(attrs, semconv.ErrorType.String(err.Error()))
 	}
+
+	// Record consume latency
+	elapsedTime := float64(time.Since(consumeStartTime)) / float64(time.Millisecond)
 	k.latency.Record(ctx, elapsedTime,
 		metric.WithAttributes(
 			attrs...,
 		))
-	k.span.End()
 }
