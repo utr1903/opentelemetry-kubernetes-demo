@@ -105,6 +105,7 @@ type KafkaConsumeTelemetryContext struct {
 }
 
 func (k *KafkaConsumeTelemetryContext) End(
+	ctx context.Context,
 	err error,
 ) {
 	elapsedTime := float64(time.Since(k.startTime)) / float64(time.Millisecond)
@@ -113,7 +114,7 @@ func (k *KafkaConsumeTelemetryContext) End(
 	if err != nil {
 		attrs = append(attrs, semconv.ErrorType.String(err.Error()))
 	}
-	k.latency.Record(k.ctx, elapsedTime,
+	k.latency.Record(ctx, elapsedTime,
 		metric.WithAttributes(
 			attrs...,
 		))

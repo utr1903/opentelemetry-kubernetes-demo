@@ -213,7 +213,7 @@ func (g *groupHandler) consumeMessage(
 	err := g.storeIntoDb(ctx, name)
 	if err != nil {
 		g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
-		kctCtx.End(err)
+		kctCtx.End(ctx, err)
 		return nil
 	}
 
@@ -221,7 +221,7 @@ func (g *groupHandler) consumeMessage(
 	session.MarkMessage(msg, "")
 	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
 
-	kctCtx.End(nil)
+	kctCtx.End(ctx, nil)
 	return nil
 }
 
