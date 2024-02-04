@@ -287,8 +287,6 @@ resource "newrelic_one_dashboard" "httpserver" {
     }
   }
 
-
-
   #########################################
   ### Application Performance (Metrics) ###
   #########################################
