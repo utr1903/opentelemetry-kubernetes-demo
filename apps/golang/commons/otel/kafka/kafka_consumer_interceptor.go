@@ -56,7 +56,7 @@ func (k *KafkaConsumer) Consume(
 	ctx context.Context,
 	msg *sarama.ConsumerMessage,
 	consumerGroup string,
-	consumeFunc func() error,
+	consumeFunc func(context.Context) error,
 ) {
 
 	// Start timer
@@ -84,7 +84,7 @@ func (k *KafkaConsumer) Consume(
 	defer span.End()
 
 	// Run the actual consume function
-	err := consumeFunc()
+	err := consumeFunc(ctx)
 	if err != nil {
 		attrs = append(attrs, semconv.ErrorType.String(err.Error()))
 	}

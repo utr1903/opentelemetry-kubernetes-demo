@@ -200,28 +200,30 @@ func (g *groupHandler) consumeMessage(
 	msg *sarama.ConsumerMessage,
 ) error {
 
-	// Create Kafka consume telemetry context
+	// Define consume function
+	consumeFunc := func(ctx context.Context) error {
+		// Parse name out of the message
+		name := string(msg.Value)
+
+		g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
+
+		// Store it into db
+		err := g.storeIntoDb(ctx, name)
+		if err != nil {
+			g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
+			return err
+		}
+
+		// Acknowledge message
+		session.MarkMessage(msg, "")
+		g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
+
+		return nil
+	}
+
+	// Execute consume within OTel wrapper
 	ctx := context.Background()
-	g.Consumer.Consume(ctx, msg, g.Opts.ConsumerGroupId,
-		func() error {
-			// Parse name out of the message
-			name := string(msg.Value)
-
-			g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
-
-			// Store it into db
-			err := g.storeIntoDb(ctx, name)
-			if err != nil {
-				g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
-				return err
-			}
-
-			// Acknowledge message
-			session.MarkMessage(msg, "")
-			g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
-
-			return nil
-		})
+	g.Consumer.Consume(ctx, msg, g.Opts.ConsumerGroupId, consumeFunc)
 
 	return nil
 }
