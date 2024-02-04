@@ -83,11 +83,11 @@ func (k *KafkaConsumer) Consume(
 	)
 	defer span.End()
 
-	// Run the actual consume function
-	err := consumeFunc(ctx)
-	if err != nil {
-		attrs = append(attrs, semconv.ErrorType.String(err.Error()))
-	}
+	// // Run the actual consume function
+	// err := consumeFunc(ctx)
+	// if err != nil {
+	// 	attrs = append(attrs, semconv.ErrorType.String(err.Error()))
+	// }
 
 	// Record consume latency
 	elapsedTime := float64(time.Since(consumeStartTime)) / float64(time.Millisecond)
