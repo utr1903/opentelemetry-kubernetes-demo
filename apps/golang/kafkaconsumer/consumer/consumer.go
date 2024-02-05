@@ -200,26 +200,30 @@ func (g *groupHandler) consumeMessage(
 	msg *sarama.ConsumerMessage,
 ) error {
 
-	// Create consumer span (parent)
-	ctx := context.Background()
-	ctx, endConsume := g.Consumer.Intercept(ctx, msg, g.Opts.ConsumerGroupId)
-	defer endConsume()
+	// Define consume function
+	consumeFunc := func(ctx context.Context) error {
+		// Parse name out of the message
+		name := string(msg.Value)
 
-	// Parse name out of the message
-	name := string(msg.Value)
+		g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
 
-	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
+		// Store it into db
+		err := g.storeIntoDb(ctx, name)
+		if err != nil {
+			g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
+			return err
+		}
 
-	// Store it into db
-	err := g.storeIntoDb(ctx, name)
-	if err != nil {
-		g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
+		// Acknowledge message
+		session.MarkMessage(msg, "")
+		g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
+
 		return nil
 	}
 
-	// Acknowledge message
-	session.MarkMessage(msg, "")
-	g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message is succeeded.")
+	// Execute consume within OTel wrapper
+	ctx := context.Background()
+	g.Consumer.Consume(ctx, msg, g.Opts.ConsumerGroupId, consumeFunc)
 
 	return nil
 }

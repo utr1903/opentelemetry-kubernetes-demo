@@ -37,6 +37,8 @@ The following Azure resources will be deployed:
 
 In order for a Github workflow to start/stop or deploy Helm charts onto the AKS, it requires access rights for which we will be using an Azure service principal. That will be created and given the necessary rights per the script [`02_create_github_service_account.sh`](/infra/cluster/azure/scripts/02_create_github_service_account.sh).
 
+Moreover, the same service principal will be used to run Terraform deployments which needs to store the state of the deployment in a backend. This backend will be the base storage account `st${project}base${instance}`. In order to create store that state in a blob container, the service principal will be given necessary rights on the storage account as well!
+
 ```shell
 bash 02_create_github_service_account.sh --project myproj --instance 001 --location westeurope
 ```

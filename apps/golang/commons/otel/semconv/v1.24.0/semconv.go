@@ -11,7 +11,7 @@ import (
 )
 
 // GENERAL
-// https://github.com/open-telemetry/semantic-conventions/tree/v1.24.0/docs/database
+// https://github.com/open-telemetry/semantic-conventions/tree/v1.24.0/docs/general
 const (
 	OtelStatusCodeName        = "otel.status_code"
 	OtelStatusCode            = attribute.Key(OtelStatusCodeName)
@@ -20,6 +20,8 @@ const (
 
 	ExceptionEscapedName = "exception.escaped"
 	ExceptionEscaped     = attribute.Key(ExceptionEscapedName)
+	ErrorTypeName        = "error.type"
+	ErrorType            = attribute.Key(ErrorTypeName)
 
 	NetworkProtocolVersionName = "network.protocol.version"
 	NetworkProtocolVersion     = attribute.Key(NetworkProtocolVersionName)
@@ -261,6 +263,7 @@ func splitAddressAndPort(
 }
 
 // DATABASE
+// https://github.com/open-telemetry/semantic-conventions/tree/v1.24.0/docs/database
 const (
 	DatabaseSystem      = attribute.Key("db.system")
 	DatabaseUser        = attribute.Key("db.user")

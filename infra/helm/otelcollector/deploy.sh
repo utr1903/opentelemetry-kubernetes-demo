@@ -60,8 +60,8 @@ if [[ $newrelicOtlpEndpoint == "" ]]; then
   echo -e "New Relic OTLP endpoint [--newrelic-otlp-endpoint] is not provided.\n"
   exit 1
 else
-  if [[ $newrelicOtlpEndpoint != "otlp.nr-data.net:4317" && $newrelicOtlpEndpoint != "otlp.eu01.nr-data.net:4317" ]]; then
-    echo "Given New Relic OTLP endpoint [--newrelic-otlp-endpoint] is not supported. Supported values are: US -> otlp.nr-data.net:4317, EU -> otlp.eu01.nr-data.net:4317."
+  if [[ $newrelicOtlpEndpoint != "https://otlp.nr-data.net" && $newrelicOtlpEndpoint != "https://otlp.eu01.nr-data.net" ]]; then
+    echo "Given New Relic OTLP endpoint [--newrelic-otlp-endpoint] is not supported. Supported values are: US -> https://otlp.nr-data.net, EU -> https://otlp.eu01.nr-data.net."
     exit 1
   fi
 fi
@@ -98,5 +98,5 @@ helm upgrade ${otelcollectors[name]} \
   --set global.newrelic.enabled=true \
   --set global.newrelic.endpoint=$newrelicOtlpEndpoint \
   --set global.newrelic.teams.opsteam.licenseKey.value=$newrelicOpsteamLicenseKey \
-  --version "0.6.0" \
+  --version "0.7.0" \
   "newrelic-experimental/nrotelk8s"

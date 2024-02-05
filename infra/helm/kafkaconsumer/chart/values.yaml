@@ -28,7 +28,7 @@ otel:
 # OTLP
 otlp:
   # Endpoint  
-  endpoint: "https://otlp.nr-data.net:4317"
+  endpoint: "https://otlp.nr-data.net"
   # Headers
   headers: ""
 

@@ -52,14 +52,14 @@ func NewKafkaConsumer() *KafkaConsumer {
 	}
 }
 
-func (k *KafkaConsumer) Intercept(
+func (k *KafkaConsumer) Consume(
 	ctx context.Context,
 	msg *sarama.ConsumerMessage,
 	consumerGroup string,
-) (
-	context.Context,
-	func(),
+	consumeFunc func(context.Context) error,
 ) {
+
+	// Start timer
 	consumeStartTime := time.Now()
 
 	// Get tracing info from message
@@ -73,6 +73,7 @@ func (k *KafkaConsumer) Intercept(
 	ctx = propagator.Extract(ctx, headers)
 
 	spanAttrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
+	attrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
 
 	ctx, span := k.tracer.Start(
 		ctx,
@@ -80,16 +81,18 @@ func (k *KafkaConsumer) Intercept(
 		trace.WithSpanKind(trace.SpanKindConsumer),
 		trace.WithAttributes(spanAttrs...),
 	)
+	defer span.End()
 
-	// Record consumer latency
-	endConsume := func() {
-		elapsedTime := float64(time.Since(consumeStartTime)) / float64(time.Millisecond)
-		k.latency.Record(ctx, elapsedTime,
-			metric.WithAttributes(
-				semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)...,
-			))
-		span.End()
-	}
+	// // Run the actual consume function
+	// err := consumeFunc(ctx)
+	// if err != nil {
+	// 	attrs = append(attrs, semconv.ErrorType.String(err.Error()))
+	// }
 
-	return ctx, endConsume
+	// Record consume latency
+	elapsedTime := float64(time.Since(consumeStartTime)) / float64(time.Millisecond)
+	k.latency.Record(ctx, elapsedTime,
+		metric.WithAttributes(
+			attrs...,
+		))
 }
