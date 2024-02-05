@@ -99,10 +99,19 @@ else
   fi
 fi
 
+### Set variables
+resourceGroupName="rg${project}base${instance}"
+storageAccountName="st${project}base${instance}"
+blobContainerName="${project}tfstates"
+
 if [[ $flagDestroy != "true" ]]; then
 
   # Initialize Terraform
-  terraform -chdir=./monitoring/newrelic/apps/terraform init
+  terraform -chdir=./monitoring/newrelic/apps/terraform init \
+    -backend-config="resource_group_name=${resourceGroupName}" \
+    -backend-config="storage_account_name=${storageAccountName}" \
+    -backend-config="container_name=${blobContainerName}" \
+    -backend-config="key=monitoring-newrelic-apps-${language}"
 
   # Plan Terraform
   terraform -chdir=./monitoring/newrelic/apps/terraform plan \
