@@ -89,14 +89,14 @@ resourceGroupName="rg${project}base${instance}"
 storageAccountName="st${project}base${instance}"
 blobContainerName="${project}tfstates"
 
-if [[ $flagDestroy != "true" ]]; then
+# Initialize Terraform
+terraform -chdir=./monitoring/newrelic/infra/terraform init \
+  -backend-config="resource_group_name=${resourceGroupName}" \
+  -backend-config="storage_account_name=${storageAccountName}" \
+  -backend-config="container_name=${blobContainerName}" \
+  -backend-config="key=monitoring-newrelic-infra"
 
-  # Initialize Terraform
-  terraform -chdir=./monitoring/newrelic/infra/terraform init \
-    -backend-config="resource_group_name=${resourceGroupName}" \
-    -backend-config="storage_account_name=${storageAccountName}" \
-    -backend-config="container_name=${blobContainerName}" \
-    -backend-config="key=monitoring-newrelic-infra"
+if [[ $flagDestroy != "true" ]]; then
 
   # Plan Terraform
   terraform -chdir=./monitoring/newrelic/infra/terraform plan \
