@@ -98,5 +98,5 @@ helm upgrade ${otelcollectors[name]} \
   --set global.newrelic.enabled=true \
   --set global.newrelic.endpoint=$newrelicOtlpEndpoint \
   --set global.newrelic.teams.opsteam.licenseKey.value=$newrelicOpsteamLicenseKey \
-  --version "0.6.0" \
+  --version "0.7.0" \
   "newrelic-experimental/nrotelk8s"
