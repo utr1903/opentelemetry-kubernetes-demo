@@ -42,21 +42,21 @@ if [[ $location == "" ]]; then
 fi
 
 ### Set variables
-resourceGroupName="rg${project}base${instance}"
-storageAccountName="st${project}base${instance}"
-blobContainerName="${project}tfstates"
+baseResourceGroupName="rg${project}base${instance}"
+baseStorageAccountName="st${project}base${instance}"
+baseBlobContainerName="${project}tfstates"
 
 # Resource group
-echo "Checking base resource group [${resourceGroupName}]..."
-resourceGroup=$(az group show \
-  --name $resourceGroupName \
+echo "Checking base resource group [${baseResourceGroupName}]..."
+baseResourceGroup=$(az group show \
+  --name $baseResourceGroupName \
   2> /dev/null)
 
-if [[ $resourceGroup == "" ]]; then
+if [[ $baseResourceGroup == "" ]]; then
   echo " -> Base resource group does not exist. Creating..."
 
-  resourceGroup=$(az group create \
-    --name $resourceGroupName \
+  baseResourceGroup=$(az group create \
+    --name $baseResourceGroupName \
     --location $location)
 
   echo -e " -> Base resource group is created successfully.\n"
@@ -65,16 +65,16 @@ else
 fi
 
 # Storage account
-echo "Checking base storage account [${storageAccountName}]..."
-storageAccount=$(az storage account show \
+echo "Checking base storage account [${baseStorageAccountName}]..."
+baseStorageAccount=$(az storage account show \
     --resource-group $resourceGroupName \
-    --name $storageAccountName \
+    --name $baseStorageAccountName \
   2> /dev/null)
 
-if [[ $storageAccount == "" ]]; then
+if [[ $baseStorageAccount == "" ]]; then
   echo " -> Base storage account does not exist. Creating..."
 
-  storageAccount=$(az storage account create \
+  baseStorageAccount=$(az storage account create \
     --resource-group $resourceGroupName \
     --name $storageAccountName \
     --sku "Standard_LRS" \
@@ -87,18 +87,18 @@ else
 fi
 
 # Terraform blob container
-echo "Checking Terraform blob container [${blobContainerName}]..."
+echo "Checking Terraform blob container [${baseBlobContainerName}]..."
 terraformBlobContainer=$(az storage container show \
-  --account-name $storageAccountName \
-  --name $blobContainerName \
+  --account-name $baseStorageAccountName \
+  --name $baseBlobContainerName \
   2> /dev/null)
 
 if [[ $terraformBlobContainer == "" ]]; then
   echo " -> Terraform blob container does not exist. Creating..."
 
   terraformBlobContainer=$(az storage container create \
-    --account-name $storageAccountName \
-    --name $blobContainerName \
+    --account-name $baseStorageAccountName \
+    --name $baseBlobContainerName \
     2> /dev/null)
 
   echo -e " -> Terraform blob container is created successfully.\n"
