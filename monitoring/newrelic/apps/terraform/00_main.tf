@@ -4,11 +4,22 @@
 
 terraform {
   required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~>3.66.0"
+    }
     newrelic = {
       source  = "newrelic/newrelic"
       version = ">=3.21.3"
     }
   }
+
+  backend "azurerm" {}
+}
+
+# Configure the Azure Provider
+provider "azurerm" {
+  features {}
 }
 
 # Configure the NR Provider

@@ -2,6 +2,22 @@
 ### New Relic ###
 #################
 
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~>3.66.0"
+    }
+  }
+
+  backend "azurerm" {}
+}
+
+# Configure the Azure Provider
+provider "azurerm" {
+  features {}
+}
+
 # Kubernetes infra monitoring
 module "nrotelk8s" {
   source = "github.com/newrelic-experimental/monitoring-kubernetes-with-opentelemetry.git?ref=newrelic-monitoring-0.3.0/monitoring/terraform"
