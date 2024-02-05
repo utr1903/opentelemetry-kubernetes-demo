@@ -42,9 +42,13 @@ if [[ $location == "" ]]; then
 fi
 
 ### Set variables
+baseResourceGroupName="rg${project}base${instance}"
+baseStorageAccountName="st${project}base${instance}"
+
 mainResourceGroupName="rg${project}main${instance}"
 mainAksResourceName="aks${project}main${instance}"
 mainKeyVaultName="kv${project}main${instance}"
+
 servicePrincipalName="sp${project}${instance}"
 
 # Resource group
@@ -71,10 +75,11 @@ servicePrincipal=$(az ad app list \
 if [[ $servicePrincipal == "null" ]]; then
   echo " -> Service principal does not exist. Creating..."
 
+  # Give "Contributor" right for base storage account & main AKS
   servicePrincipal=$(az ad sp create-for-rbac \
     --name $servicePrincipalName \
     --role "Contributor" \
-    --scopes "/subscriptions/${subscriptionId}/resourceGroups/${mainResourceGroupName}/providers/Microsoft.ContainerService/managedClusters/${mainAksResourceName}")
+    --scopes "/subscriptions/${subscriptionId}/resourceGroups/${mainResourceGroupName}/providers/Microsoft.ContainerService/managedClusters/${mainAksResourceName} /subscriptions/${subscriptionId}/resourceGroups/${baseResourceGroupName}/providers/Microsoft.Storage/storageAccounts/${baseStorageAccountName}")
 
   echo -e " -> Service principal is created successfully.\n"
 
