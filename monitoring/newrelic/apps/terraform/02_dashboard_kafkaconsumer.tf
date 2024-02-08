@@ -342,7 +342,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(messaging.receive.duration), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND numeric(http.response.status_code) >= 500)/count(messaging.receive.duration)*100 AS `Error rate` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer'"
+        query      = "FROM Metric SELECT filter(count(messaging.receive.duration), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(messaging.receive.duration)*100 AS `Error rate` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer'"
       }
     }
 
@@ -354,12 +354,12 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
       width  = 3
       height = 3
 
-      text = "## Latency\n\nLatency is monitored per the metric `messaging.receive.duration` which represents a histogram.\n\nIt corresponds to the aggregated response time of the HTTP server.\n\nMoreover, the detailed performance can be investigated according to the methods, response codes, instances, routes etc."
+      text = "## Latency\n\nLatency is monitored per the metric `messaging.receive.duration` which represents a histogram.\n\nIt corresponds to the aggregated consume time of the Kafka consumer.\n\nMoreover, the detailed performance can be investigated according to the topics, error types, instances etc."
     }
 
-    # Average latency per HTTP status code across all instances (ms)
+    # Average latency per Kafka topic across all instances (ms)
     widget_billboard {
-      title  = "Average latency per HTTP status code across all instances (ms)"
+      title  = "Average latency per Kafka topic across all instances (ms)"
       column = 4
       row    = 4
       width  = 3
@@ -367,13 +367,13 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(`messaging.receive.duration`) AS `Latency` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT average(`messaging.receive.duration`) AS `Latency` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `messaging.destination.name`"
       }
     }
 
-    # Average latency per HTTP method & route across all instances (ms)
+    # Average latency per error type across all instances (ms)
     widget_bar {
-      title  = "Average latency per HTTP method & route across all instances (ms)"
+      title  = "Average latency per error type across all instances (ms)"
       column = 7
       row    = 4
       width  = 6
@@ -381,7 +381,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(`messaging.receive.duration`) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' AND `http.request.method` IS NOT NULL FACET `http.request.method`"
+        query      = "FROM Metric SELECT average(`messaging.receive.duration`) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' AND `error.type`"
       }
     }
 
@@ -421,12 +421,12 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
       width  = 3
       height = 3
 
-      text = "## Throughput\n\nThroughput is monitored per the rate of change in the metric `messaging.receive.duration` in format of request per minute.\n\nIt corresponds to the aggregated amount of requests which are processed by the HTTP server in a minute.\n\nMoreover, the detailed performance can be investigated according to the methods, response codes, instances, routes etc."
+      text = "## Throughput\n\nThroughput is monitored per the rate of change in the metric `messaging.receive.duration` in format of request per minute.\n\nIt corresponds to the aggregated amount of messages which are processed by the Kafka consumer in a minute.\n\nMoreover, the detailed performance can be investigated according to the topics, error types, instances etc."
     }
 
-    # Total throughput per HTTP status code across all instances (rpm)
+    # Total throughput per Kafka topic across all instances (rpm)
     widget_billboard {
-      title  = "Total throughput per HTTP status code across all instances (rpm)"
+      title  = "Total throughput per Kafka topic across all instances (rpm)"
       column = 4
       row    = 10
       width  = 3
@@ -434,13 +434,13 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`messaging.receive.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT rate(count(`messaging.receive.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `messaging.destination.name`"
       }
     }
 
-    # Total throughput per HTTP method & route across all instances (rpm)
+    # Total throughput per error type across all instances (rpm)
     widget_bar {
-      title  = "Total throughput per HTTP method & route across all instances (rpm)"
+      title  = "Total throughput per error type across all instances (rpm)"
       column = 7
       row    = 10
       width  = 6
@@ -448,7 +448,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`messaging.receive.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' AND `http.request.method` IS NOT NULL FACET `http.request.method`"
+        query      = "FROM Metric SELECT rate(count(`messaging.receive.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `error.type`"
       }
     }
 
@@ -488,12 +488,12 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
       width  = 3
       height = 3
 
-      text = "## Error rate\n\nError rate is monitored per the metric `messaging.receive.duration` which ended with an error.\n\nIt corresponds to the ratio of the aggregated amount of requests which have an HTTP status code of above 500 in compared to all requests.\n\nMoreover, the detailed performance can be investigated according to the methods, response codes, instances, routes etc."
+      text = "## Error rate\n\nError rate is monitored per the metric `messaging.receive.duration` which ended with an error.\n\nIt corresponds to the ratio of the aggregated amount of consumed messages which have an error in compared to all consumed messages.\n\nMoreover, the detailed performance can be investigated according to the the topics, error types, instances etc."
     }
 
-    # Average error rate per HTTP status code across all instances (%)
+    # Average error rate per Kafka topic across all instances (%)
     widget_billboard {
-      title  = "Average error rate per HTTP status code across all instances (%)"
+      title  = "Average error rate per Kafka topic across all instances (%)"
       column = 4
       row    = 16
       width  = 3
@@ -501,13 +501,13 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND numeric(`http.response.status_code`) >= 500)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND numeric(`http.response.status_code`) >= 500)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `messaging.destination.name`"
       }
     }
 
-    # Average error rate per HTTP method & route across all instances (%)
+    # Average error rate per error types across all instances (%)
     widget_bar {
-      title  = "Error rate per HTTP method & route across all instances (%)"
+      title  = "Error rate per error types across all instances (%)"
       column = 7
       row    = 16
       width  = 6
@@ -515,7 +515,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND numeric(`http.response.status_code`) >= 500)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' AND `http.request.method` IS NOT NULL FACET `http.request.method`"
+        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.types` IS NOT NULL)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `error.type`"
       }
     }
 
@@ -529,7 +529,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND numeric(`http.response.status_code`) >= 500)/count(`messaging.receive.duration`)*100 AS `Overall Error Rate` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' TIMESERIES"
+        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(`messaging.receive.duration`)*100 AS `Overall Error Rate` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' TIMESERIES"
       }
     }
 
@@ -543,7 +543,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND numeric(`http.response.status_code`) >= 500)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET k8s.pod.name TIMESERIES"
+        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET k8s.pod.name TIMESERIES"
       }
     }
   }
