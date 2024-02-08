@@ -381,7 +381,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(`messaging.receive.duration`) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' AND `error.type`"
+        query      = "FROM Metric SELECT average(`messaging.receive.duration`) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `error.type`"
       }
     }
 
@@ -501,7 +501,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND numeric(`http.response.status_code`) >= 500)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `messaging.destination.name`"
+        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL))/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `messaging.destination.name`"
       }
     }
 
@@ -515,7 +515,7 @@ resource "newrelic_one_dashboard" "kafkaconsumer" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.types` IS NOT NULL)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `error.type`"
+        query      = "FROM Metric SELECT filter(count(`messaging.receive.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(`messaging.receive.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'kafkaconsumer' FACET `error.type`"
       }
     }
 
