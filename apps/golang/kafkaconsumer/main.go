@@ -70,6 +70,7 @@ func main() {
 	// Health checks
 	http.Handle("/livez", http.HandlerFunc(server.Livez))
 	http.Handle("/readyz", http.HandlerFunc(server.Readyz))
+	http.ListenAndServe(":"+cfg.ServicePort, nil)
 
 	<-ctx.Done()
 }
