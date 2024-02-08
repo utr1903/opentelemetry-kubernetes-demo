@@ -156,7 +156,7 @@ func (h *HttpServerSimulator) causeRandomError() map[string]string {
 	randomNum := h.Randomizer.Intn(15)
 	reqParams := map[string]string{}
 
-	if randomNum == 1 || randomNum == 2 || randomNum == 3 || randomNum == 4 {
+	if randomNum == 1 || randomNum == 2 || randomNum == 3 {
 		reqParams[randomErrors[randomNum]] = "true"
 	}
 
