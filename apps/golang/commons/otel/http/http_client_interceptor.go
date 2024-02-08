@@ -99,7 +99,19 @@ func (c *HttpClient) Do(
 	*http.Response,
 	error,
 ) {
+	// Start timer
 	requestStartTime := time.Now()
+
+	// Create latency recording function
+	recordLatencyFunc := func(
+		ctx context.Context,
+		startTime time.Time,
+		attrs []attribute.KeyValue,
+	) {
+		// Record server latency
+		elapsedTime := float64(time.Since(requestStartTime)) / float64(time.Millisecond)
+		c.latency.Record(ctx, elapsedTime, metric.WithAttributes(attrs...))
+	}
 
 	// Parse HTTP attributes from the request for both span and metrics
 	spanAttrs, metricAttrs := c.getSpanAndMetricServerAttributes(req)
@@ -122,18 +134,22 @@ func (c *HttpClient) Do(
 		req.Header.Add(k, v[0])
 	}
 
+	// Perform HTTP request
 	res, err := c.client.Do(req)
+	if err != nil {
+		// Record error
+		span.RecordError(err)
+		// Record server latency
+		recordLatencyFunc(ctx, requestStartTime, metricAttrs)
+		return nil, err
+	}
 
 	// Add HTTP status code to the attributes
 	span.SetAttributes(semconv.HttpResponseStatusCode.Int(res.StatusCode))
 	metricAttrs = append(metricAttrs, semconv.HttpResponseStatusCode.Int(res.StatusCode))
 
-	// Create metric options
-	metricOpts := metric.WithAttributes(metricAttrs...)
-
 	// Record server latency
-	elapsedTime := float64(time.Since(requestStartTime)) / float64(time.Millisecond)
-	c.latency.Record(ctx, elapsedTime, metricOpts)
+	recordLatencyFunc(ctx, requestStartTime, metricAttrs)
 
 	return res, err
 }
