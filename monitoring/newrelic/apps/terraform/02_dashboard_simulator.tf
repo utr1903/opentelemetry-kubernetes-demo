@@ -289,10 +289,10 @@ resource "newrelic_one_dashboard" "simulator" {
 
 
   #####################################################
-  ### Application Performance HTTP Server (Metrics) ###
+  ### Application Performance HTTP Client (Metrics) ###
   #####################################################
   page {
-    name = "Application Performance HTTP Server (Metrics)"
+    name = "Application Performance HTTP Client (Metrics)"
 
     # Golden Signals
     widget_markdown {
@@ -544,16 +544,16 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
       }
     }
   }
 
   ###################################################
-  ### Application Performance HTTP Server (Spans) ###
+  ### Application Performance HTTP Client (Spans) ###
   ###################################################
   page {
-    name = "Application Performance HTTP Server (Spans)"
+    name = "Application Performance HTTP Client (Spans)"
 
     # Golden Signals
     widget_markdown {
@@ -806,6 +806,267 @@ resource "newrelic_one_dashboard" "simulator" {
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
         query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
+      }
+    }
+  }
+
+  ########################################################
+  ### Application Performance Kafka Producer (Metrics) ###
+  ########################################################
+  page {
+    name = "Application Performance Kafka Producer (Metrics)"
+
+    # Golden Signals
+    widget_markdown {
+      title  = ""
+      column = 1
+      row    = 1
+      width  = 3
+      height = 3
+
+      text = "## Application Performance\n\nThis page is dedicated for the application golden signals retrieved from the metrics.\n\n- Latency\n- Throughput\n- Error Rate"
+    }
+
+    # Average latency across all instances (ms)
+    widget_billboard {
+      title  = "Average latency across all instances (ms)"
+      column = 4
+      row    = 1
+      width  = 3
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT average(messaging.publish.duration) AS `Latency` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator'"
+      }
+    }
+
+    # Total throughput across all instances (rpm)
+    widget_billboard {
+      title  = "Total throughput across all instances (rpm)"
+      column = 7
+      row    = 1
+      width  = 3
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT rate(count(messaging.publish.duration), 1 minute) AS `Throughput` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator'"
+      }
+    }
+
+    # Average error rate across all instances (%)
+    widget_billboard {
+      title  = "Average error rate across all instances (%)"
+      column = 10
+      row    = 1
+      width  = 3
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT filter(count(messaging.publish.duration), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(messaging.publish.duration)*100 AS `Error rate` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator'"
+      }
+    }
+
+    # Latency
+    widget_markdown {
+      title  = ""
+      column = 1
+      row    = 4
+      width  = 3
+      height = 3
+
+      text = "## Latency\n\nLatency is monitored per the metric `messaging.publish.duration` which represents a histogram.\n\nIt corresponds to the aggregated consume time of the Kafka consumer.\n\nMoreover, the detailed performance can be investigated according to the topics, error types, instances etc."
+    }
+
+    # Average latency per Kafka topic across all instances (ms)
+    widget_billboard {
+      title  = "Average latency per Kafka topic across all instances (ms)"
+      column = 4
+      row    = 4
+      width  = 3
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT average(`messaging.publish.duration`) AS `Latency` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET `messaging.destination.name`"
+      }
+    }
+
+    # Average latency per error type across all instances (ms)
+    widget_bar {
+      title  = "Average latency per error type across all instances (ms)"
+      column = 7
+      row    = 4
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT average(`messaging.publish.duration`) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET `error.type`"
+      }
+    }
+
+    # Average latency across all instances (ms)
+    widget_line {
+      title  = "Average latency across all instances (ms)"
+      column = 1
+      row    = 7
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT average(`messaging.publish.duration`) AS `Overall Latency` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' TIMESERIES"
+      }
+    }
+
+    # Average latency per instance (ms)
+    widget_line {
+      title  = "Average latency per instance (ms)"
+      column = 7
+      row    = 7
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT average(`messaging.publish.duration`) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET k8s.pod.name TIMESERIES"
+      }
+    }
+
+    # Throughput
+    widget_markdown {
+      title  = ""
+      column = 1
+      row    = 10
+      width  = 3
+      height = 3
+
+      text = "## Throughput\n\nThroughput is monitored per the rate of change in the metric `messaging.publish.duration` in format of request per minute.\n\nIt corresponds to the aggregated amount of messages which are processed by the Kafka consumer in a minute.\n\nMoreover, the detailed performance can be investigated according to the topics, error types, instances etc."
+    }
+
+    # Total throughput per Kafka topic across all instances (rpm)
+    widget_billboard {
+      title  = "Total throughput per Kafka topic across all instances (rpm)"
+      column = 4
+      row    = 10
+      width  = 3
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT rate(count(`messaging.publish.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET `messaging.destination.name`"
+      }
+    }
+
+    # Total throughput per error type across all instances (rpm)
+    widget_bar {
+      title  = "Total throughput per error type across all instances (rpm)"
+      column = 7
+      row    = 10
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT rate(count(`messaging.publish.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET `error.type`"
+      }
+    }
+
+    # Total throughput across all instances (rpm)
+    widget_line {
+      title  = "Total throughput across all instances (rpm)"
+      column = 1
+      row    = 13
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT rate(count(`messaging.publish.duration`), 1 minute) AS `Overall Throughput` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' TIMESERIES"
+      }
+    }
+
+    # Average throughput per instance (rpm)
+    widget_line {
+      title  = "Average throughput per instance (rpm)"
+      column = 7
+      row    = 13
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT rate(count(`messaging.publish.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET k8s.pod.name TIMESERIES"
+      }
+    }
+
+    # Error rate
+    widget_markdown {
+      title  = ""
+      column = 1
+      row    = 16
+      width  = 3
+      height = 3
+
+      text = "## Error rate\n\nError rate is monitored per the metric `messaging.publish.duration` which ended with an error.\n\nIt corresponds to the ratio of the aggregated amount of consumed messages which have an error in compared to all consumed messages.\n\nMoreover, the detailed performance can be investigated according to the the topics, error types, instances etc."
+    }
+
+    # Average error rate per Kafka topic across all instances (%)
+    widget_billboard {
+      title  = "Average error rate per Kafka topic across all instances (%)"
+      column = 4
+      row    = 16
+      width  = 3
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT filter(count(`messaging.publish.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(`messaging.publish.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET `messaging.destination.name`"
+      }
+    }
+
+    # Average error rate per error types across all instances (%)
+    widget_bar {
+      title  = "Error rate per error types across all instances (%)"
+      column = 7
+      row    = 16
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT filter(count(`messaging.publish.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(`messaging.publish.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET `error.type`"
+      }
+    }
+
+    # Average error rate across all instances (%)
+    widget_line {
+      title  = "Average error rate across all instances (%)"
+      column = 1
+      row    = 19
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT filter(count(`messaging.publish.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(`messaging.publish.duration`)*100 AS `Overall Error Rate` WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' TIMESERIES"
+      }
+    }
+
+    # Average error rate per instance (%)
+    widget_line {
+      title  = "Error rate per instance (%)"
+      column = 7
+      row    = 19
+      width  = 6
+      height = 3
+
+      nrql_query {
+        account_id = var.NEW_RELIC_ACCOUNT_ID
+        query      = "FROM Metric SELECT filter(count(`messaging.publish.duration`), WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND `error.type` IS NOT NULL)/count(`messaging.publish.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND k8s.cluster.name = '${var.cluster_name}' AND service.name = 'simulator' FACET k8s.pod.name TIMESERIES"
       }
     }
   }
