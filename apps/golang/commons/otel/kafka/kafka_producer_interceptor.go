@@ -90,7 +90,7 @@ func (k *KafkaProducer) Publish(
 	span := k.createProducerSpan(ctx, msg)
 	defer span.End()
 
-	if *errType == commonerr.KAFKA_CONNECTION_ERROR {
+	if errType != nil && *errType == commonerr.KAFKA_CONNECTION_ERROR {
 
 		// Sleep as if trying to reach Kafka
 		time.Sleep(3 * time.Second)
