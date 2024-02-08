@@ -315,7 +315,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(http.client.request.duration) AS `Latency` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local'"
+        query      = "FROM Metric SELECT average(http.client.request.duration) AS `Latency` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local'"
       }
     }
 
@@ -329,7 +329,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(http.client.request.duration), 1 minute) AS `Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local'"
+        query      = "FROM Metric SELECT rate(count(http.client.request.duration), 1 minute) AS `Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local'"
       }
     }
 
@@ -343,7 +343,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(http.client.request.duration), WHERE instrumentation.provider = 'opentelemetry' AND numeric(http.response.status_code) >= 500)/count(http.client.request.duration)*100 AS `Error rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local'"
+        query      = "FROM Metric SELECT filter(count(http.client.request.duration), WHERE instrumentation.provider = 'opentelemetry' AND numeric(http.response.status_code) >= 500)/count(http.client.request.duration)*100 AS `Error rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local'"
       }
     }
 
@@ -368,7 +368,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(`http.client.request.duration`) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT average(`http.client.request.duration`) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET `http.response.status_code`"
       }
     }
 
@@ -382,7 +382,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(`http.client.request.duration`) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
+        query      = "FROM Metric SELECT average(`http.client.request.duration`) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
       }
     }
 
@@ -396,7 +396,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(`http.client.request.duration`) AS `Overall Latency` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT average(`http.client.request.duration`) AS `Overall Latency` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -410,7 +410,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT average(`http.client.request.duration`) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
+        query      = "FROM Metric SELECT average(`http.client.request.duration`) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
       }
     }
 
@@ -435,7 +435,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET `http.response.status_code`"
       }
     }
 
@@ -449,7 +449,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
       }
     }
 
@@ -463,7 +463,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) AS `Overall Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) AS `Overall Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -477,7 +477,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
       }
     }
 
@@ -502,7 +502,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET `http.response.status_code`"
       }
     }
 
@@ -516,7 +516,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
       }
     }
 
@@ -530,7 +530,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 AS `Overall Error Rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 AS `Overall Error Rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -544,7 +544,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
   }
@@ -576,7 +576,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -590,7 +590,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Span SELECT rate(count(*), 1 minute) AS `Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Span SELECT rate(count(*), 1 minute) AS `Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -604,7 +604,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Span SELECT filter(count(*), WHERE instrumentation.provider = 'opentelemetry' AND otel.status_code = 'ERROR')/count(*)*100 AS `Error rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver-golang.golang.svc.cluster.local'"
+        query      = "FROM Span SELECT filter(count(*), WHERE instrumentation.provider = 'opentelemetry' AND otel.status_code = 'ERROR')/count(*)*100 AS `Error rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver.golang.svc.cluster.local'"
       }
     }
 
@@ -629,7 +629,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET `http.response.status_code`"
+        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver.golang.svc.cluster.local' FACET `http.response.status_code`"
       }
     }
 
@@ -643,7 +643,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET `http.request.method`, `url.full`"
+        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver.golang.svc.cluster.local' FACET `http.request.method`, `url.full`"
       }
     }
 
@@ -657,7 +657,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -671,7 +671,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
+        query      = "FROM Span SELECT average(duration.ms) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND span.kind = 'client' AND server.address = 'httpserver.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
       }
     }
 
@@ -696,7 +696,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET `http.response.status_code`"
       }
     }
 
@@ -710,7 +710,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
       }
     }
 
@@ -724,7 +724,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) AS `Overall Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) AS `Overall Throughput` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -738,7 +738,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
+        query      = "FROM Metric SELECT rate(count(`http.client.request.duration`), 1 minute) WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET k8s.pod.name TIMESERIES"
       }
     }
 
@@ -763,7 +763,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' FACET `http.response.status_code`"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' FACET `http.response.status_code`"
       }
     }
 
@@ -777,7 +777,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' AND `http.request.method` IS NOT NULL AND `server.address` IS NOT NULL FACET `http.request.method`, `server.address`"
       }
     }
 
@@ -791,7 +791,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 AS `Overall Error Rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 AS `Overall Error Rate` WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
 
@@ -805,7 +805,7 @@ resource "newrelic_one_dashboard" "simulator" {
 
       nrql_query {
         account_id = var.NEW_RELIC_ACCOUNT_ID
-        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver-golang.golang.svc.cluster.local' TIMESERIES"
+        query      = "FROM Metric SELECT filter(count(`http.client.request.duration`), WHERE instrumentation.provider = 'opentelemetry' AND numeric(`http.response.status_code`) >= 500)/count(`http.client.request.duration`)*100 WHERE instrumentation.provider = 'opentelemetry' AND service.name = 'simulator' AND server.address = 'httpserver.golang.svc.cluster.local' TIMESERIES"
       }
     }
   }
