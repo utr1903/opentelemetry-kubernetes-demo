@@ -2,6 +2,7 @@ package kafkaproducer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -9,9 +10,19 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/sirupsen/logrus"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/dtos"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 
 	otelkafka "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/kafka"
+)
+
+var (
+	randomErrors = map[int]string{
+		1: "databaseConnectionError",
+		2: "tableDoesNotExistError",
+		3: "preprocessingException",
+		4: "schemaNotFoundInCacheWarning",
+	}
 )
 
 type Opts struct {
@@ -144,6 +155,9 @@ func (k *KafkaConsumerSimulator) publishMessages(
 	// Keep publishing messages
 	for {
 		func() {
+			// Inject tracing info into message
+			ctx := context.Background()
+
 			// Make request after each interval
 			time.Sleep(time.Duration(k.Opts.RequestInterval) * time.Millisecond)
 
@@ -151,13 +165,15 @@ func (k *KafkaConsumerSimulator) publishMessages(
 			user := users[k.Randomizer.Intn(len(users))]
 
 			// Create message
+			body, err := k.createMessageBody(user)
+			if err != nil {
+				k.logger.Log(logrus.ErrorLevel, ctx, user, "Creating message body failed:"+err.Error())
+				return
+			}
 			msg := sarama.ProducerMessage{
 				Topic: k.Opts.BrokerTopic,
-				Value: sarama.ByteEncoder([]byte(user)),
+				Value: sarama.ByteEncoder(body),
 			}
-
-			// Inject tracing info into message
-			ctx := context.Background()
 
 			// Publish message
 			k.logger.Log(logrus.InfoLevel, ctx, user, "Publishing message...")
@@ -165,4 +181,24 @@ func (k *KafkaConsumerSimulator) publishMessages(
 			k.logger.Log(logrus.InfoLevel, ctx, user, "Message published successfully.")
 		}()
 	}
+}
+
+// Creates the message body with a potential random error
+func (k *KafkaConsumerSimulator) createMessageBody(
+	user string,
+) (
+	[]byte,
+	error,
+) {
+
+	dto := &dtos.CreateRequestDto{
+		Name: user,
+	}
+
+	randomNum := k.Randomizer.Intn(15)
+	if randomNum == 1 || randomNum == 2 || randomNum == 3 || randomNum == 4 {
+		dto.Error = randomErrors[randomNum]
+	}
+
+	return json.Marshal(dto)
 }

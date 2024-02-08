@@ -2,12 +2,14 @@ package consumer
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/IBM/sarama"
 	"github.com/sirupsen/logrus"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/dtos"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	otelkafka "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/kafka"
@@ -204,12 +206,19 @@ func (g *groupHandler) consumeMessage(
 	consumeFunc := func(ctx context.Context) error {
 
 		// Parse name out of the message
-		name := string(msg.Value)
+		body, err := g.parseMessageBody(ctx, msg.Value)
+		if err != nil {
+			g.logger.Log(logrus.ErrorLevel, ctx, "", "Consuming message is failed.")
+			return err
+		}
+
+		name := body.Name
+		errType := body.Error
 
 		g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
 
 		// Store it into db
-		err := g.storeIntoDb(ctx, name)
+		err = g.storeIntoDb(ctx, name, errType)
 		if err != nil {
 			g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
 			return err
@@ -229,16 +238,56 @@ func (g *groupHandler) consumeMessage(
 	return nil
 }
 
+func (g *groupHandler) parseMessageBody(
+	ctx context.Context,
+	messageBody []byte,
+) (
+	*dtos.CreateRequestDto,
+	error,
+) {
+
+	// Start parsing span
+	parentSpan := trace.SpanFromContext(ctx)
+	ctx, parseSpan := parentSpan.TracerProvider().
+		Tracer(semconv.KafkaConsumerName).
+		Start(
+			ctx,
+			"parse dto",
+			trace.WithSpanKind(trace.SpanKindInternal),
+		)
+	defer parseSpan.End()
+
+	g.logger.Log(logrus.InfoLevel, ctx, "", "Parsing dto...")
+
+	var dto *dtos.CreateRequestDto
+	err := json.Unmarshal(messageBody, dto)
+	if err != nil {
+		msg := "Parsing dto failed."
+		g.logger.Log(logrus.ErrorLevel, ctx, "", msg)
+		g.addErrorToSpan(parseSpan, msg, err)
+		return nil, err
+	}
+
+	g.logger.Log(logrus.InfoLevel, ctx, dto.Name, "Parsing dto succeeded.")
+	return dto, nil
+}
+
 func (g *groupHandler) storeIntoDb(
 	ctx context.Context,
 	name string,
+	errType string,
 ) error {
 
 	g.logger.Log(logrus.InfoLevel, ctx, name, "Storing into DB...")
 
-	// Build db query
+	// Create table does not exist error
+	var dbStatement string
 	dbOperation := "INSERT"
-	dbStatement := dbOperation + " INTO " + g.MySql.Opts.Table + " (name) VALUES (?)"
+	if errType == "tableDoesNotExistError" {
+		dbStatement = dbOperation + " INTO " + "faketable" + " (name) VALUES (?)"
+	} else {
+		dbStatement = dbOperation + " INTO " + g.MySql.Opts.Table + " (name) VALUES (?)"
+	}
 
 	// Create database span
 	parentSpan := trace.SpanFromContext(ctx)
