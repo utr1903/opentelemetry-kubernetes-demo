@@ -259,7 +259,7 @@ func (g *groupHandler) parseMessageBody(
 
 	g.logger.Log(logrus.InfoLevel, ctx, "", "Parsing dto...")
 
-	var dto *dtos.CreateRequestDto
+	dto := &dtos.CreateRequestDto{}
 	err := json.Unmarshal(messageBody, dto)
 	if err != nil {
 		msg := "Parsing dto failed."
