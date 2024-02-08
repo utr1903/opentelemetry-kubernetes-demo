@@ -324,6 +324,17 @@ func (g *groupHandler) storeIntoDb(
 		return err
 	}
 
+	// Create database connection error
+	if errType == "databaseConnectionError" {
+		msg := "Connection to database is lost."
+		g.logger.Log(logrus.ErrorLevel, ctx, name, msg)
+
+		// Add error to span
+		g.addErrorToSpan(dbSpan, msg, err)
+
+		return errors.New("database connection lost")
+	}
+
 	g.logger.Log(logrus.InfoLevel, ctx, name, "Storing into DB is succeeded.")
 	return nil
 }
