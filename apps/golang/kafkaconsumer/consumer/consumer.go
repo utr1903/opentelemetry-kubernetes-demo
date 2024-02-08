@@ -202,6 +202,7 @@ func (g *groupHandler) consumeMessage(
 
 	// Define consume function
 	consumeFunc := func(ctx context.Context) error {
+
 		// Parse name out of the message
 		name := string(msg.Value)
 

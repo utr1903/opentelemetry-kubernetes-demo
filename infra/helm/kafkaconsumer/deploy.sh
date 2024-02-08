@@ -85,6 +85,7 @@ kafkaconsumer["name"]="kafkaconsumer"
 kafkaconsumer["imageName"]="ghcr.io/${githubActor}/${project}-${kafkaconsumer[name]}-${language}:latest"
 kafkaconsumer["namespace"]="${language}"
 kafkaconsumer["replicas"]=2
+kafkaconsumer["port"]=8080
 
 ###################
 ### Deploy Helm ###
@@ -102,6 +103,7 @@ helm upgrade ${kafkaconsumer[name]} \
   --set imagePullPolicy="Always" \
   --set name=${kafkaconsumer[name]} \
   --set replicas=${kafkaconsumer[replicas]} \
+  --set port=${kafkaconsumer[port]} \
   --set kafka.address="${kafka[name]}.${kafka[namespace]}.svc.cluster.local:9092" \
   --set kafka.topic=${kafka[topic]} \
   --set kafka.groupId=${kafkaconsumer[name]} \

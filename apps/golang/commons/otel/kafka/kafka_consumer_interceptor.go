@@ -64,17 +64,16 @@ func (k *KafkaConsumer) Consume(
 
 	// Get tracing info from message
 	headers := propagation.MapCarrier{}
-
 	for _, recordHeader := range msg.Headers {
 		headers[string(recordHeader.Key)] = string(recordHeader.Value)
 	}
-
 	propagator := otel.GetTextMapPropagator()
 	ctx = propagator.Extract(ctx, headers)
 
+	// Generate span attributes
 	spanAttrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
-	attrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
 
+	// Start consume span
 	ctx, span := k.tracer.Start(
 		ctx,
 		fmt.Sprintf("%s receive", msg.Topic),
@@ -83,16 +82,19 @@ func (k *KafkaConsumer) Consume(
 	)
 	defer span.End()
 
-	// // Run the actual consume function
-	// err := consumeFunc(ctx)
-	// if err != nil {
-	// 	attrs = append(attrs, semconv.ErrorType.String(err.Error()))
-	// }
+	// Generate metric attributes
+	metricAttrs := semconv.WithMessagingKafkaConsumerAttributes(msg, consumerGroup)
+
+	// Run the actual consume function
+	err := consumeFunc(ctx)
+	if err != nil {
+		metricAttrs = append(metricAttrs, semconv.ErrorType.String(err.Error()))
+	}
 
 	// Record consume latency
 	elapsedTime := float64(time.Since(consumeStartTime)) / float64(time.Millisecond)
 	k.latency.Record(ctx, elapsedTime,
 		metric.WithAttributes(
-			attrs...,
+			metricAttrs...,
 		))
 }

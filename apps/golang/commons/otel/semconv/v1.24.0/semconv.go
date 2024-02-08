@@ -323,7 +323,7 @@ func WithMessagingKafkaProducerAttributes(
 	msg *sarama.ProducerMessage,
 ) []attribute.KeyValue {
 
-	numAttributes := 4 // Operation, system, destination & partition
+	numAttributes := 4 // system, operation, destination & partition
 
 	// Create attributes array
 	attrs := make([]attribute.KeyValue, 0, numAttributes)
@@ -342,7 +342,7 @@ func WithMessagingKafkaConsumerAttributes(
 	consumerGroup string,
 ) []attribute.KeyValue {
 
-	numAttributes := 4 // Operation, system, destination & partition
+	numAttributes := 4 // system, operation, destination & consumer group
 
 	// Create attributes array
 	attrs := make([]attribute.KeyValue, 0, numAttributes)
@@ -351,9 +351,11 @@ func WithMessagingKafkaConsumerAttributes(
 	attrs = append(attrs, MessagingSystem.String("kafka"))
 	attrs = append(attrs, MessagingOperation.String("receive"))
 	attrs = append(attrs, MessagingDestinationName.String(msg.Topic))
-	attrs = append(attrs, MessagingKafkaDestinationPartition.Int(int(msg.Partition)))
 	attrs = append(attrs, MessagingKafkaConsumerGroup.String(consumerGroup))
-	attrs = append(attrs, MessagingKafkaMessageOffset.Int(int(msg.Offset)))
+
+	// TODO: These both attributes are causing unexpected behaviour. Fix them later on.
+	// attrs = append(attrs, MessagingKafkaDestinationPartition.Int(int(msg.Partition)))
+	// attrs = append(attrs, MessagingKafkaMessageOffset.Int(int(msg.Offset)))
 
 	return attrs
 }

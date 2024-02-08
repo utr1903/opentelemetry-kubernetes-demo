@@ -2,15 +2,18 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 
 	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/config"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/consumer"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/server"
 )
 
 func main() {
@@ -60,6 +63,14 @@ func main() {
 	if err := kafkaConsumer.StartConsumerGroup(ctx); err != nil {
 		panic(err.Error())
 	}
+
+	// Instantiate server
+	server := server.New(log, db)
+
+	// Health checks
+	http.Handle("/livez", http.HandlerFunc(server.Livez))
+	http.Handle("/readyz", http.HandlerFunc(server.Readyz))
+	http.ListenAndServe(":"+cfg.ServicePort, nil)
 
 	<-ctx.Done()
 }

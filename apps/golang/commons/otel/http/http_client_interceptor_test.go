@@ -34,7 +34,7 @@ func Test_CommonClientAttributesCreatedSuccessfully(t *testing.T) {
 	req.Header = headers
 
 	c := &HttpClient{}
-	spanAttrs, metricAttrs := c.getSpanAndMetricServerAttributes(req)
+	spanAttrs, metricAttrs := c.getSpanAndMetricClientAttributes(req)
 
 	// Check lengths of span and metric attributes
 	if len(spanAttrs) != len(metricAttrs) {
