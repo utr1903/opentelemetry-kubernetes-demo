@@ -13,15 +13,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 
+	commonerr "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/error"
 	otelhttp "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/http"
 )
 
 var (
 	randomErrors = map[int]string{
-		1: "databaseConnectionError",
-		2: "tableDoesNotExistError",
-		3: "preprocessingException",
-		4: "schemaNotFoundInCacheWarning",
+		1: commonerr.DATABASE_CONNECTION_ERROR,
+		2: commonerr.TABLE_DOES_NOT_EXIST_ERROR,
+		3: commonerr.SCHEMA_NOT_FOUND_IN_CACHE,
 	}
 )
 
@@ -156,7 +156,7 @@ func (h *HttpServerSimulator) causeRandomError() map[string]string {
 	randomNum := h.Randomizer.Intn(15)
 	reqParams := map[string]string{}
 
-	if randomNum == 1 || randomNum == 2 || randomNum == 3 || randomNum == 4 {
+	if randomNum == 1 || randomNum == 2 || randomNum == 3 {
 		reqParams[randomErrors[randomNum]] = "true"
 	}
 

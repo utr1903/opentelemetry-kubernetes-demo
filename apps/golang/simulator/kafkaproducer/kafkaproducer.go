@@ -2,6 +2,7 @@ package kafkaproducer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -9,9 +10,19 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/sirupsen/logrus"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/dtos"
+	commonerr "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/error"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 
 	otelkafka "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/kafka"
+)
+
+var (
+	randomErrors = map[int]string{
+		1: commonerr.KAFKA_CONNECTION_ERROR,
+		2: commonerr.DATABASE_CONNECTION_ERROR,
+		3: commonerr.TABLE_DOES_NOT_EXIST_ERROR,
+	}
 )
 
 type Opts struct {
@@ -144,25 +155,64 @@ func (k *KafkaConsumerSimulator) publishMessages(
 	// Keep publishing messages
 	for {
 		func() {
+			// Inject tracing info into message
+			ctx := context.Background()
+
 			// Make request after each interval
 			time.Sleep(time.Duration(k.Opts.RequestInterval) * time.Millisecond)
 
 			// Get a random user
 			user := users[k.Randomizer.Intn(len(users))]
 
+			// Create random error
+			errType := k.createRandomError()
+
 			// Create message
+			body, err := k.createMessageBody(user, errType)
+			if err != nil {
+				k.logger.Log(logrus.ErrorLevel, ctx, user, "Creating message body failed:"+err.Error())
+				return
+			}
 			msg := sarama.ProducerMessage{
 				Topic: k.Opts.BrokerTopic,
-				Value: sarama.ByteEncoder([]byte(user)),
+				Value: sarama.ByteEncoder(body),
 			}
-
-			// Inject tracing info into message
-			ctx := context.Background()
 
 			// Publish message
 			k.logger.Log(logrus.InfoLevel, ctx, user, "Publishing message...")
-			otelproducer.Publish(ctx, &msg)
+			otelproducer.Publish(ctx, &msg, errType)
 			k.logger.Log(logrus.InfoLevel, ctx, user, "Message published successfully.")
 		}()
 	}
+}
+
+func (k *KafkaConsumerSimulator) createRandomError() *string {
+	randomNum := k.Randomizer.Intn(15)
+	if randomNum == 1 || randomNum == 2 || randomNum == 3 {
+		errType := randomErrors[randomNum]
+		return &errType
+	}
+	return nil
+}
+
+// Creates the message body with a potential random error
+func (k *KafkaConsumerSimulator) createMessageBody(
+	user string,
+	errType *string,
+) (
+	[]byte,
+	error,
+) {
+
+	// Create dto
+	dto := &dtos.CreateRequestDto{
+		Name: user,
+	}
+
+	// Add error if created
+	if errType != nil {
+		dto.Error = *errType
+	}
+
+	return json.Marshal(dto)
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+	commonerr "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/error"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	otelmysql "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/mysql"
@@ -131,7 +132,7 @@ func (s *Server) performQuery(
 	}
 
 	// Create database connection error
-	databaseConnectionError := r.URL.Query().Get("databaseConnectionError")
+	databaseConnectionError := r.URL.Query().Get(commonerr.DATABASE_CONNECTION_ERROR)
 	if databaseConnectionError == "true" {
 		msg := "Connection to database is lost."
 		s.logger.Log(logrus.ErrorLevel, ctx, user, msg)
@@ -164,7 +165,7 @@ func (s *Server) createDbQuery(
 		dbOperation = "SELECT"
 
 		// Create table does not exist error
-		tableDoesNotExistError := r.URL.Query().Get("tableDoesNotExistError")
+		tableDoesNotExistError := r.URL.Query().Get(commonerr.TABLE_DOES_NOT_EXIST_ERROR)
 		if tableDoesNotExistError == "true" {
 			dbStatement = dbOperation + " name FROM " + "faketable"
 		} else {
@@ -273,7 +274,7 @@ func (s *Server) produceSchemaNotFoundInCacheWarning(
 	r *http.Request,
 ) {
 	s.logger.Log(logrus.InfoLevel, ctx, s.getUser(r), "Postprocessing...")
-	schemaNotFoundInCacheWarning := r.URL.Query().Get("schemaNotFoundInCacheWarning")
+	schemaNotFoundInCacheWarning := r.URL.Query().Get(commonerr.SCHEMA_NOT_FOUND_IN_CACHE)
 	if schemaNotFoundInCacheWarning == "true" {
 		user := s.getUser(r)
 		s.logger.Log(logrus.WarnLevel, ctx, user, "Processing schema not found in cache. Calculating from scratch.")
