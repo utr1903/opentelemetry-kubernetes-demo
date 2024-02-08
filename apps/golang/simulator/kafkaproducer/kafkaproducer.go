@@ -164,8 +164,11 @@ func (k *KafkaConsumerSimulator) publishMessages(
 			// Get a random user
 			user := users[k.Randomizer.Intn(len(users))]
 
+			// Create random error
+			errType := k.createRandomError()
+
 			// Create message
-			body, err := k.createMessageBody(user)
+			body, err := k.createMessageBody(user, errType)
 			if err != nil {
 				k.logger.Log(logrus.ErrorLevel, ctx, user, "Creating message body failed:"+err.Error())
 				return
@@ -177,27 +180,38 @@ func (k *KafkaConsumerSimulator) publishMessages(
 
 			// Publish message
 			k.logger.Log(logrus.InfoLevel, ctx, user, "Publishing message...")
-			otelproducer.Publish(ctx, &msg)
+			otelproducer.Publish(ctx, &msg, errType)
 			k.logger.Log(logrus.InfoLevel, ctx, user, "Message published successfully.")
 		}()
 	}
 }
 
+func (k *KafkaConsumerSimulator) createRandomError() *string {
+	randomNum := k.Randomizer.Intn(15)
+	if randomNum == 1 || randomNum == 2 || randomNum == 3 {
+		errType := randomErrors[randomNum]
+		return &errType
+	}
+	return nil
+}
+
 // Creates the message body with a potential random error
 func (k *KafkaConsumerSimulator) createMessageBody(
 	user string,
+	errType *string,
 ) (
 	[]byte,
 	error,
 ) {
 
+	// Create dto
 	dto := &dtos.CreateRequestDto{
 		Name: user,
 	}
 
-	randomNum := k.Randomizer.Intn(15)
-	if randomNum == 1 || randomNum == 2 || randomNum == 3 || randomNum == 4 {
-		dto.Error = randomErrors[randomNum]
+	// Add error if created
+	if errType != nil {
+		dto.Error = *errType
 	}
 
 	return json.Marshal(dto)
