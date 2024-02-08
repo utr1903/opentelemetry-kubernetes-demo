@@ -101,6 +101,7 @@ helm upgrade ${kafkaconsumer[name]} \
   --set dockerhubName=$DOCKERHUB_NAME \
   --set imageName=${kafkaconsumer[imageName]} \
   --set imagePullPolicy="Always" \
+  --set language=${language} \
   --set name=${kafkaconsumer[name]} \
   --set replicas=${kafkaconsumer[replicas]} \
   --set port=${kafkaconsumer[port]} \

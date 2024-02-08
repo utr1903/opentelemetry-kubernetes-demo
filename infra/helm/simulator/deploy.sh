@@ -98,6 +98,7 @@ helm upgrade ${simulator[name]} \
   --namespace=${simulator[namespace]} \
   --set imageName=${simulator[imageName]} \
   --set imagePullPolicy="Always" \
+  --set language=${language} \
   --set name=${simulator[name]} \
   --set replicas=${simulator[replicas]} \
   --set port=${simulator[port]} \
