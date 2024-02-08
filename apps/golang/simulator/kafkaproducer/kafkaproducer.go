@@ -11,6 +11,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/sirupsen/logrus"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/dtos"
+	commonerr "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/error"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 
 	otelkafka "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/kafka"
@@ -18,10 +19,9 @@ import (
 
 var (
 	randomErrors = map[int]string{
-		1: "databaseConnectionError",
-		2: "tableDoesNotExistError",
-		3: "preprocessingException",
-		4: "schemaNotFoundInCacheWarning",
+		1: commonerr.KAFKA_CONNECTION_ERROR,
+		2: commonerr.DATABASE_CONNECTION_ERROR,
+		3: commonerr.TABLE_DOES_NOT_EXIST_ERROR,
 	}
 )
 

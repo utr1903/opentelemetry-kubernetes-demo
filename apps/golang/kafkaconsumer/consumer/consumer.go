@@ -10,6 +10,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/sirupsen/logrus"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/dtos"
+	commonerr "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/error"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	otelkafka "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/kafka"
@@ -283,7 +284,7 @@ func (g *groupHandler) storeIntoDb(
 	// Create table does not exist error
 	var dbStatement string
 	dbOperation := "INSERT"
-	if errType == "tableDoesNotExistError" {
+	if errType == commonerr.TABLE_DOES_NOT_EXIST_ERROR {
 		dbStatement = dbOperation + " INTO " + "faketable" + " (name) VALUES (?)"
 	} else {
 		dbStatement = dbOperation + " INTO " + g.MySql.Opts.Table + " (name) VALUES (?)"
@@ -325,7 +326,7 @@ func (g *groupHandler) storeIntoDb(
 	}
 
 	// Create database connection error
-	if errType == "databaseConnectionError" {
+	if errType == commonerr.DATABASE_CONNECTION_ERROR {
 		msg := "Connection to database is lost."
 		g.logger.Log(logrus.ErrorLevel, ctx, name, msg)
 
