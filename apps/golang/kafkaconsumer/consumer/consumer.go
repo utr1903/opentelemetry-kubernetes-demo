@@ -208,7 +208,7 @@ func (g *groupHandler) consumeMessage(
 		// Parse name out of the message
 		body, err := g.parseMessageBody(ctx, msg.Value)
 		if err != nil {
-			g.logger.Log(logrus.ErrorLevel, ctx, "", "Consuming message is failed.")
+			g.logger.Log(logrus.ErrorLevel, ctx, "", "Consuming message is failed: "+err.Error())
 			return err
 		}
 
@@ -220,7 +220,7 @@ func (g *groupHandler) consumeMessage(
 		// Store it into db
 		err = g.storeIntoDb(ctx, name, errType)
 		if err != nil {
-			g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed.")
+			g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed: "+err.Error())
 			return err
 		}
 
@@ -302,7 +302,7 @@ func (g *groupHandler) storeIntoDb(
 	// Prepare a statement
 	stmt, err := g.MySql.Instance.Prepare(dbStatement)
 	if err != nil {
-		msg := "Preparing DB statement is failed."
+		msg := "Preparing DB statement is failed: " + err.Error()
 		g.logger.Log(logrus.ErrorLevel, ctx, name, msg)
 
 		// Add error to span
@@ -315,7 +315,7 @@ func (g *groupHandler) storeIntoDb(
 	// Execute the statement
 	_, err = stmt.Exec(name)
 	if err != nil {
-		msg := "Storing into DB is failed."
+		msg := "Storing into DB is failed: " + err.Error()
 		g.logger.Log(logrus.ErrorLevel, ctx, name, msg)
 
 		// Add error to span
