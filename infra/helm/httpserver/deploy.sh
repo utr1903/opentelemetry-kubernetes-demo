@@ -94,6 +94,7 @@ helm upgrade ${httpserver[name]} \
   --namespace=${httpserver[namespace]} \
   --set imageName=${httpserver[imageName]} \
   --set imagePullPolicy="Always" \
+  --set language=${language} \
   --set name=${httpserver[name]} \
   --set replicas=${httpserver[replicas]} \
   --set port=${httpserver[port]} \
