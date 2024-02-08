@@ -114,7 +114,7 @@ func (c *HttpClient) Do(
 	}
 
 	// Parse HTTP attributes from the request for both span and metrics
-	spanAttrs, metricAttrs := c.getSpanAndMetricServerAttributes(req)
+	spanAttrs, metricAttrs := c.getSpanAndMetricClientAttributes(req)
 
 	// Create span options
 	spanOpts := []trace.SpanStartOption{
@@ -154,7 +154,7 @@ func (c *HttpClient) Do(
 	return res, err
 }
 
-func (m *HttpClient) getSpanAndMetricServerAttributes(
+func (m *HttpClient) getSpanAndMetricClientAttributes(
 	r *http.Request,
 ) (
 	[]attribute.KeyValue,
