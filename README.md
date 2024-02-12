@@ -35,9 +35,9 @@ Although Kubernetes is provider agnostic, the repo aims to run the environment i
 - [Azure](./infra/cluster/azure/)
 - [GCP](./infra/cluster/gcp/) (to be implemented)
 
-## Application deployment
+## Applications
 
-Every application that is used in this repo is deployed by Helm charts via Github workflows. In order to accomplish full automation, dedicated naming conventions and folder structures are used:
+Every application that is used in this repo is built and deployed by Helm charts via Github workflows. In order to accomplish full automation, dedicated naming conventions and folder structures are used:
 
 ```
 apps/
@@ -77,4 +77,16 @@ infra/
 - [oteloperator](/infra/helm/oteloperator/)
 - [simulator](/infra/helm/simulator/)
 
-How the applications are to be build/pushed and deployed to the cluster can be found [here](/infra/helm/README.md)!
+### Build & Push
+
+You can refer to [this](/apps/README.md) documentation for building and pushing the images. You can either use the automated way per Github workflows or the local option for faster development.
+
+### Deploy
+
+You can refer to to [this](/infra/helm/README.md) documentation for deploying them onto your cluster. You can either use the automated way per Github workflows or the local option for faster development.
+
+### Monitor
+
+You can find necessary documentation for each observability backend to monitor the cluster and the apps:
+
+- [New Relic](/monitoring/newrelic/)
