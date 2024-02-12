@@ -17,45 +17,6 @@ In order to run the environment properly, the applications should be deployed in
 - `kafkaconsumer` requires `mysql`, `kafka` & `otelcollector`.
 - `simulator` requires `kafka`, `kafkaconsumer`, `httpserver` & `otelcollector`.
 
-## Docker images
-
-Our own applications (`httpserver`, `kafkaconsumer` & `simulator`) need to be built and pushed to a container registry for which the Github container registry (`ghcr.io`) is chosen. This step is automated by the Github workflow [`docker_build_push.yaml`](/.github/workflows/docker_build_push.yaml)
-
-The workflow is designed to be run on demand and therefore it is to be run manually. It has 2 input parameters: `language` & `application`.
-
-```
-application
-- httpserver
-- kafkaconsumer
-- simulator
-```
-
-```
-language
-- dotnet
-- golang
-- java
-- javascript
-- python
-```
-
-### Build
-
-The workflow will refer to the main Dockerfile (`/apps/<language>/Dockerfile`) and inject the necessary application name into it. Depending on that, the necessary application image will be built for `linux/amd64` and `linux/arm64` architectures.
-
-### Push
-
-After the build step is successfully completed, the image will be pushed to the Github container registry. Every image will have the following naming convention:
-
-`ghcr.io/${{ github.actor }}/${{ secrets.PROJECT }}-${{ inputs.application }}-${{ inputs.language }}:${{ github.sha }}`.
-
-Example:
-`ghcr.io/utr1903/myproj-httpserver-golang:xxx`
-
-Moreover, the last pushed image will always be tagged as `latest` so that the Kubernetes cluster can pull the newer version of the image when a new Helm chart is deployed.
-
-**IMPORTANT:** When you push an image to the Github container registry, the image repository will be PRIVATE by default. You have to manually change the visibility to PUBLIC because otherwise the Kubernetes cluster will not be able to pull the image!
-
 ## Helm deployment
 
 Every application should be deployed in the order mentioned at the beginning of this document. In order to deploy any application, the Github workflow [`helm_deploy.yaml`](/.github/workflows/helm_deploy.yaml) is to be used.
@@ -85,6 +46,53 @@ language
 
 **IMPORTANT**
 
-The deployment of the charts `cert-manager`, `kafka`, `mysql`, `oteloperator` & `otelcollector` should leave the `language` input empty! The are using remote Helm charts for deployment.
+The deployment of the charts `cert-manager`, `kafka`, `mysql`, `oteloperator` & `otelcollector` should leave the `language` input empty! They are using remote Helm charts for deployment.
 
 On the other hand, `language` is required for the charts `httpserver`, `kafkaconsumer` & `simulator` because they are using local Helm charts!
+
+## Local development
+
+When you are developing locally, you wouldn't want to push your code to Github, wait for a runner to pick it up and deploy it to your cluster. In matter of fact, if you are working locally on a `kind` cluster, the Helm deployment of the Github workflow won't help you at all.
+
+### Remote Helm charts
+
+The deployment of the charts `cert-manager`, `oteloperator`, `kafka` & `mysql` are fairly simple. Just change directory to their corresponding folders and run the `deploy.sh` script. It will automatically deploy the remote Helm charts onto your `kind` cluster with necessary configuration.
+
+The `otelcollector` is the key component of this repository. This is a special implementation of various types of collectors and is the hub for all the telemetry data collected throughout the cluster. For detailed explanation of this Helm chart, refer to it's actual [repository](https://github.com/newrelic-experimental/monitoring-kubernetes-with-opentelemetry)!
+
+You can deploy it as follows:
+
+```shell
+bash deploy.sh \
+  --project <YOUR_PREFERRED_PROJECT_NAME> \
+  --instance <YOUR_INSTANCE> \
+  --cluster-type <YOUR_CLUSTER_TYPE> \ # aks, eks, gke, kind
+  --newrelic-otlp-endpoint \ # https://otlp.nr-data.net or https://otlp.eu01.nr-data.net
+  --newrelic-opsteam-license-key <YOUR_NEWRELIC_LICENSE_KEY>
+```
+
+Example:
+
+```shell
+bash deploy.sh --project myproj --instance 001 --cluster-type kind --newrelic-otlp-endpoint https://otlp.eu01.nr-data.net --newrelic-opsteam-license-key $NEWRELIC_LICENSE_KEY_OPSTEAM
+```
+
+### Local Helm charts
+
+Our own applications `httpserver`, `kafkaconsumer` & `simulator` have their own local Helm templates and thereby are to be deployed with the local Helm configuration. You can run the `/infra/helm/${language}/deploy_local.sh` scripts in each application.
+
+Example (`httpserver`):
+
+```shell
+bash deploy_local.sh \
+  --docker-username <DOCKERHUB_USERNAME> \
+  --language <PROGRAMMING_LANGUAGE_OF_APPLICATION> \ # golang, java etc.
+  --project <YOUR_PREFERRED_PROJECT_NAME> \
+  --instance <YOUR_INSTANCE>
+```
+
+Example:
+
+```shell
+bash deploy_local.sh --docker-username utr1903 --language golang --project myproj --instance 001
+```
