@@ -48,8 +48,8 @@ if [[ $clusterType == "" ]]; then
   echo "Cluster type [--cluster-type] is not given."
   exit 1
 else
-  if [[ $clusterType != "aks" ]]; then
-    echo "Given cluster type [--cluster-type] is not supported. Supported values are: aks."
+  if [[ $clusterType != "aks" && $clusterType != "kind" ]]; then
+    echo "Given cluster type [--cluster-type] is not supported. Supported values are: aks & kind"
     exit 1
   fi
   clusterName="${clusterType}${project}${instance}"
