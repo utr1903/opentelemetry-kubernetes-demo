@@ -57,7 +57,7 @@ func ShutdownTraceProvider(
 	tp *sdktrace.TracerProvider,
 ) {
 	// Do not make the application hang when it is shutdown.
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	if err := tp.Shutdown(ctx); err != nil {
 		panic(err)
@@ -90,7 +90,7 @@ func ShutdownMetricProvider(
 	mp *sdkmetric.MeterProvider,
 ) {
 	// Do not make the application hang when it is shutdown.
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	if err := mp.Shutdown(ctx); err != nil {
 		panic(err)
