@@ -15,6 +15,7 @@ on:
           - mysql
           - otelcollector
           - oteloperator
+          - redis
           - simulator
       language:
         type: choice
