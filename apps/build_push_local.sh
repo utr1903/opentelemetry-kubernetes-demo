@@ -45,6 +45,7 @@ fi
 httpserverImageName="${project}-httpserver-${language}:latest"
 kafkaconsumerImageName="${project}-kafkaconsumer-${language}:latest"
 simulatorImageName="${project}-simulator-${language}:latest"
+latencymanagerImageName="${project}-latencymanager-${language}:latest"
 
 ####################
 ### Build & Push ###
@@ -73,3 +74,11 @@ docker build \
   --build-arg="APP_NAME=simulator" \
   "./${language}/."
 docker push "${dockerUsername}/${simulatorImageName}"
+
+# latencymanager
+docker build \
+  --platform "linux/${platform}" \
+  --tag "${dockerUsername}/${latencymanagerImageName}" \
+  --build-arg="APP_NAME=latencymanager" \
+  "./${language}/."
+docker push "${dockerUsername}/${latencymanagerImageName}"
