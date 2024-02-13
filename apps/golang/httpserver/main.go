@@ -54,6 +54,8 @@ func main() {
 		redis.WithPort(cfg.RedisPort),
 		redis.WithPassword(cfg.RedisPassword),
 	)
+	rdb.CreateDatabaseConnection()
+	defer rdb.Instance.Close()
 
 	// Instantiate server
 	server := server.New(log, mdb, rdb)

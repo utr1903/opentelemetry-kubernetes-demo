@@ -106,7 +106,7 @@ helm upgrade ${httpserver[name]} \
   --set replicas=${httpserver[replicas]} \
   --set port=${httpserver[port]} \
   --set redis.server="${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
-  --set redis.port="${redis[port]}" \
+  --set redis.port=${redis[port]} \
   --set redis.password="${redis[password]}" \
   --set mysql.server="${mysql[name]}.${mysql[namespace]}.svc.cluster.local" \
   --set mysql.username=${mysql[username]} \
