@@ -4,6 +4,7 @@
 declare -A redis
 redis["name"]="redis"
 redis["namespace"]="ops"
+redis["password"]="megasecret"
 
 ###################
 ### Deploy Helm ###
@@ -20,5 +21,6 @@ helm upgrade ${redis[name]} \
   --debug \
   --create-namespace \
   --namespace=${redis[namespace]} \
+  --set auth.password=${redis[password]} \
   --version "18.12.1" \
   "bitnami/redis"
