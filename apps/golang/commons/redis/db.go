@@ -80,8 +80,7 @@ func (r *RedisDatabase) CreateDatabaseConnection() {
 	// Ping the Redis server to ensure the connection is established
 	pong, err := db.Ping().Result()
 	if err != nil {
-		fmt.Println("Error connecting to Redis:", err)
-		return
+		panic(err)
 	}
 
 	fmt.Println("Connected to Redis:", pong)
