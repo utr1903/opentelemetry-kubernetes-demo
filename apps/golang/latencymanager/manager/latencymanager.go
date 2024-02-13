@@ -74,7 +74,10 @@ func (m *LatencyManager) Run() {
 	isLatencyIncreaseEnabled := m.getCurrentLatencyStatus(ctx, cronJobSpan)
 
 	// Set new latency value to Redis
-	m.setNewLatencyStatus(ctx, cronJobSpan, isLatencyIncreaseEnabled)
+	err := m.setNewLatencyStatus(ctx, cronJobSpan, isLatencyIncreaseEnabled)
+	if err != nil {
+		return
+	}
 
 	m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Cron job ["+m.cronJobName+"] is finished successfully.")
 }
@@ -146,7 +149,7 @@ func (m *LatencyManager) setNewLatencyStatus(
 		enable = "true" // enable
 	}
 
-	attrs = append(attrs, attribute.Key(commonerr.INCREASE_HTTPSERVER_LATENCY).String(enable))
+	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(enable))
 	dbSpan.SetAttributes(attrs...)
 
 	// Set the new latency status
