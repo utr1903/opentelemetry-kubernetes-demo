@@ -6,11 +6,11 @@ metadata:
 spec:
   schedule: "* * * * *"
   jobTemplate:
-    metadata:
-      labels:
-        app: {{ .Values.name }}
     spec:
       template:
+        metadata:
+          labels:
+            app: {{ .Values.name }}
         spec:
           restartPolicy: Never
           containers:
