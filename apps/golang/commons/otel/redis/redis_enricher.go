@@ -70,22 +70,23 @@ func (e *RedisEnricher) CreateSpan(
 	parentSpan trace.Span,
 	operation string,
 	key string,
-	value string,
 ) (
 	context.Context,
 	trace.Span,
 ) {
+	// Statement
+	statement := operation + " " + key
+
 	// Create database span
 	ctx, dbSpan := parentSpan.TracerProvider().
 		Tracer(e.Opts.TracerName).
 		Start(
 			ctx,
-			operation+" "+key,
+			statement,
 			trace.WithSpanKind(trace.SpanKindClient),
 		)
 
 	// Set additional span attributes
-	statement := operation + " " + key + " " + value
 	dbSpanAttrs := e.getCommonAttributes()
 	dbSpanAttrs = append(dbSpanAttrs, semconv.DatabaseDbStatement.String(statement))
 	dbSpan.SetAttributes(dbSpanAttrs...)
