@@ -141,6 +141,10 @@ func (s *Server) performRedisQuery(
 		s.logger.Log(logrus.WarnLevel, r.Context(), s.getUser(r), "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is found.")
 		time.Sleep(time.Second)
 	}
+	// Create attributes array
+	attrs := make([]attribute.KeyValue, 0, 1)
+	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(increaseLatency))
+	dbSpan.SetAttributes(attrs...)
 }
 
 // Performs the database query against the MySQL database

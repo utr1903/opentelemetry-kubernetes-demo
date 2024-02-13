@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -113,14 +114,21 @@ func (m *LatencyManager) getCurrentLatencyStatus(
 	defer dbSpan.End()
 
 	// Retrieve variables from Redis
+	var enabled bool
 	increaseLatency, _ := m.Redis.Instance.Get(commonerr.INCREASE_HTTPSERVER_LATENCY).Result()
 	if increaseLatency == "true" {
 		m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is found.")
-		return true
+		enabled = true
 	} else {
 		m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is not found.")
-		return false
+		enabled = false
 	}
+	// Create attributes array
+	attrs := make([]attribute.KeyValue, 0, 1)
+	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(strconv.FormatBool(enabled)))
+	dbSpan.SetAttributes(attrs...)
+
+	return enabled
 }
 
 func (m *LatencyManager) setNewLatencyStatus(
@@ -142,18 +150,12 @@ func (m *LatencyManager) setNewLatencyStatus(
 	attrs := make([]attribute.KeyValue, 0, 1)
 
 	// If latency increase is enabled, disable it & vice versa
-	var enable string
-	if isLatencyIncreaseEnabled {
-		enable = "" // disable
-	} else {
-		enable = "true" // enable
-	}
-
-	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(enable))
+	enableLatencyIncrease := strconv.FormatBool(!isLatencyIncreaseEnabled)
+	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(enableLatencyIncrease))
 	dbSpan.SetAttributes(attrs...)
 
 	// Set the new latency status
-	_, err := m.Redis.Instance.Set(commonerr.INCREASE_HTTPSERVER_LATENCY, enable, time.Hour).Result()
+	err := m.Redis.Instance.Set(commonerr.INCREASE_HTTPSERVER_LATENCY, enableLatencyIncrease, time.Hour).Err()
 	if err != nil {
 		m.logger.Log(logrus.ErrorLevel, ctx, LATENCY_MANAGER, "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] could not be set: "+err.Error())
 		return err
