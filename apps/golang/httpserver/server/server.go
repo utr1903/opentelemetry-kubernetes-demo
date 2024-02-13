@@ -94,7 +94,7 @@ func (s *Server) Readyz(
 }
 
 // Server handler
-func (s *Server) Handler(
+func (s *Server) ServerHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
