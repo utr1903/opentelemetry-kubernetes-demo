@@ -81,7 +81,7 @@ helm upgrade ${latencymanager[name]} \
   --set imagePullPolicy="Always" \
   --set language=${language} \
   --set name=${latencymanager[name]} \
-  --set redis.server="${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
+  --set redis.server="${redis[name]}-master-0.${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
   --set redis.port=${redis[port]} \
   --set redis.password="${redis[password]}" \
   --set otel.exporter="otlp" \
