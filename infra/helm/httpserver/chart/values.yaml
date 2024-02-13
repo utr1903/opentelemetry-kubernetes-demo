@@ -35,6 +35,15 @@ otlp:
   # Headers
   headers: ""
 
+# Redis
+redis:
+  # Server path
+  server: ""
+  # Password
+  password: ""
+  # Port
+  port: 6379
+
 # MySQL
 mysql:
   # Server path

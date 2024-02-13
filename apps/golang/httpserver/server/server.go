@@ -13,7 +13,9 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	otelmysql "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/mysql"
+	otelredis "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/redis"
 	semconv "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/semconv/v1.24.0"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/redis"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -21,27 +23,38 @@ import (
 const SERVER string = "httpserver"
 
 type Server struct {
-	logger            *logger.Logger
+	logger *logger.Logger
+
 	MySql             *mysql.MySqlDatabase
 	MySqlOtelEnricher *otelmysql.MySqlEnricher
+
+	Redis             *redis.RedisDatabase
+	RedisOtelEnricher *otelredis.RedisEnricher
 }
 
 // Create a HTTP server instance
 func New(
 	log *logger.Logger,
-	db *mysql.MySqlDatabase,
+	mdb *mysql.MySqlDatabase,
+	rdb *redis.RedisDatabase,
 ) *Server {
 
 	return &Server{
 		logger: log,
-		MySql:  db,
+		MySql:  mdb,
 		MySqlOtelEnricher: otelmysql.NewMysqlEnricher(
 			otelmysql.WithTracerName(SERVER),
-			otelmysql.WithServer(db.Opts.Server),
-			otelmysql.WithPort(db.Opts.Port),
-			otelmysql.WithUsername(db.Opts.Username),
-			otelmysql.WithDatabase(db.Opts.Database),
-			otelmysql.WithTable(db.Opts.Table),
+			otelmysql.WithServer(mdb.Opts.Server),
+			otelmysql.WithPort(mdb.Opts.Port),
+			otelmysql.WithUsername(mdb.Opts.Username),
+			otelmysql.WithDatabase(mdb.Opts.Database),
+			otelmysql.WithTable(mdb.Opts.Table),
+		),
+		Redis: rdb,
+		RedisOtelEnricher: otelredis.NewRedisEnricher(
+			otelredis.WithTracerName(SERVER),
+			otelredis.WithServer(rdb.Opts.Server),
+			otelredis.WithPort(rdb.Opts.Port),
 		),
 	}
 }
@@ -60,15 +73,24 @@ func (s *Server) Readyz(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+
+	// MySQL
 	err := s.MySql.Instance.Ping()
 	if err != nil {
-		s.logger.Log(logrus.ErrorLevel, r.Context(), "", err.Error())
+		s.logger.Log(logrus.ErrorLevel, r.Context(), "MySQL is not reachable.", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Not OK"))
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
 	}
+
+	_, err = s.Redis.Instance.Ping().Result()
+	if err != nil {
+		s.logger.Log(logrus.ErrorLevel, r.Context(), "Redis is not reachable.", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Not OK"))
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 // Server handler

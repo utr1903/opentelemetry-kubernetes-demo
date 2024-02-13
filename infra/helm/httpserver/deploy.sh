@@ -57,6 +57,13 @@ fi
 
 ### Set variables
 
+# redis
+declare -A redis
+redis["name"]="redis"
+redis["namespace"]="ops"
+redis["port"]=6379
+redis["password"]="megasecret"
+
 # mysql
 declare -A mysql
 mysql["name"]="mysql"
@@ -98,6 +105,9 @@ helm upgrade ${httpserver[name]} \
   --set name=${httpserver[name]} \
   --set replicas=${httpserver[replicas]} \
   --set port=${httpserver[port]} \
+  --set redis.server="${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
+  --set redis.port="${redis[port]}" \
+  --set redis.password="${redis[password]}" \
   --set mysql.server="${mysql[name]}.${mysql[namespace]}.svc.cluster.local" \
   --set mysql.username=${mysql[username]} \
   --set mysql.password=${mysql[password]} \
