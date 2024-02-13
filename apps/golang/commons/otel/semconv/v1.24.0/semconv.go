@@ -359,3 +359,9 @@ func WithMessagingKafkaConsumerAttributes(
 
 	return attrs
 }
+
+// CRON JOB
+const (
+	CronJobScheduleName = "cronjob.schedule"
+	CronJobSchedule     = attribute.Key(CronJobScheduleName)
+)
