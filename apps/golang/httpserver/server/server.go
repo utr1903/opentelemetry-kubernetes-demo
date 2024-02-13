@@ -103,10 +103,13 @@ func (s *Server) ServerHandler(
 	parentSpan := trace.SpanFromContext(r.Context())
 	defer parentSpan.End()
 
-	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Handler is triggered")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Server handler is triggered")
 
-	// Perform database query
-	err := s.performQuery(w, r, parentSpan)
+	// Perform Redis database query
+	s.performRedisQuery(r, parentSpan)
+
+	// Perform MySQL database query
+	err := s.performMysqlQuery(w, r, parentSpan)
 	if err != nil {
 		return
 	}
@@ -115,14 +118,36 @@ func (s *Server) ServerHandler(
 	s.createHttpResponse(&w, http.StatusOK, []byte("Success"), parentSpan)
 }
 
+// Performs the database query against the Redis database
+func (s *Server) performRedisQuery(
+	r *http.Request,
+	parentSpan trace.Span,
+) {
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Querying Redis...")
+
+	// Create database span
+	_, dbSpan := s.RedisOtelEnricher.CreateSpan(
+		r.Context(),
+		parentSpan,
+		"GET",
+		commonerr.INCREASE_HTTPSERVER_LATENCY,
+	)
+	defer dbSpan.End()
+
+	// Retrieve variables from Redis
+	increaseLatency, _ := s.Redis.Instance.Get(commonerr.INCREASE_HTTPSERVER_LATENCY).Result()
+	if increaseLatency == "true" {
+		s.logger.Log(logrus.WarnLevel, r.Context(), s.getUser(r), "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is found.")
+		time.Sleep(time.Second)
+	}
+}
+
 // Performs the database query against the MySQL database
-func (s *Server) performQuery(
+func (s *Server) performMysqlQuery(
 	w http.ResponseWriter,
 	r *http.Request,
 	parentSpan trace.Span,
 ) error {
-
-	user := s.getUser(r)
 
 	// Build query
 	dbOperation, dbStatement, err := s.createDbQuery(r)
@@ -144,7 +169,7 @@ func (s *Server) performQuery(
 	err = s.executeDbQuery(ctx, r, dbStatement)
 	if err != nil {
 		msg := "Executing DB query is failed."
-		s.logger.Log(logrus.ErrorLevel, ctx, user, msg)
+		s.logger.Log(logrus.ErrorLevel, ctx, s.getUser(r), msg)
 
 		// Add error to span
 		s.addErrorToSpan(dbSpan, msg, err)
@@ -157,7 +182,7 @@ func (s *Server) performQuery(
 	databaseConnectionError := r.URL.Query().Get(commonerr.DATABASE_CONNECTION_ERROR)
 	if databaseConnectionError == "true" {
 		msg := "Connection to database is lost."
-		s.logger.Log(logrus.ErrorLevel, ctx, user, msg)
+		s.logger.Log(logrus.ErrorLevel, ctx, s.getUser(r), msg)
 
 		// Add error to span
 		s.addErrorToSpan(dbSpan, msg, err)
