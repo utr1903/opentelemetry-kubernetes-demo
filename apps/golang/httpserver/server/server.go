@@ -82,6 +82,7 @@ func (s *Server) Readyz(
 		w.Write([]byte("Not OK"))
 	}
 
+	// Redis
 	_, err = s.Redis.Instance.Ping().Result()
 	if err != nil {
 		s.logger.Log(logrus.ErrorLevel, r.Context(), "Redis is not reachable.", err.Error())
@@ -202,7 +203,7 @@ func (s *Server) createDbQuery(
 	string,
 	error,
 ) {
-	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Building query...")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Building MySQL query...")
 
 	var dbOperation string
 	var dbStatement string
@@ -227,7 +228,7 @@ func (s *Server) createDbQuery(
 		return "", "", errors.New("method not allowed")
 	}
 
-	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Query is built.")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "MySQL query is built.")
 	return dbOperation, dbStatement, nil
 }
 
@@ -239,7 +240,7 @@ func (s *Server) executeDbQuery(
 ) error {
 
 	user := s.getUser(r)
-	s.logger.Log(logrus.InfoLevel, ctx, user, "Executing query...")
+	s.logger.Log(logrus.InfoLevel, ctx, user, "Executing MySQL query...")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -279,7 +280,7 @@ func (s *Server) executeDbQuery(
 		return errors.New("method not allowed")
 	}
 
-	s.logger.Log(logrus.InfoLevel, ctx, user, "Query is executed.")
+	s.logger.Log(logrus.InfoLevel, ctx, user, "MySQL query is executed.")
 	return nil
 }
 

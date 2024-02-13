@@ -52,14 +52,14 @@ func WithServer(server string) OptFunc {
 	}
 }
 
-// Configure MySQL port
+// Configure Redis port
 func WithPort(port string) OptFunc {
 	return func(opts *Opts) {
 		opts.Port = port
 	}
 }
 
-// Configure MySQL password
+// Configure Redis password
 func WithPassword(password string) OptFunc {
 	return func(opts *Opts) {
 		opts.Password = password
