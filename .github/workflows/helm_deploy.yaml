@@ -76,7 +76,7 @@ jobs:
                 --instance ${{ secrets.INSTANCE }} \
                 --cluster-type aks \
                 --application ${chart} \
-                --language ${language}
+                --language ${language} \
                 --newrelic-graphql-endpoint ${{ secrets.NEWRELIC_GRAPHQL_ENDPOINT }} \
                 --newrelic-user-api-key ${{ secrets.NEWRELIC_USER_API_KEY }}
             else

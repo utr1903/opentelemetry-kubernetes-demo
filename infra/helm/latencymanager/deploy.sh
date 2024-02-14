@@ -73,9 +73,9 @@ if [[ $language == "" ]]; then
   exit 1
 fi
 
-# New Relic endpoint
+# New Relic GraphQL endpoint
 if [[ $newrelicGraphqlEndpoint == "" ]]; then
-  echo -e "New Relic OTLP endpoint [--newrelic-graphql-endpoint] is not provided.\n"
+  echo -e "New Relic GraphQL endpoint [--newrelic-graphql-endpoint] is not provided.\n"
   exit 1
 else
   if [[ $newrelicGraphqlEndpoint != "https://api.newrelic.com/graphql" && $newrelicGraphqlEndpoint != "https://api.eu.newrelic.com/graphql" ]]; then
@@ -84,7 +84,7 @@ else
   fi
 fi
 
-# New Relic OTLP endpoint
+# New Relic user API key endpoint
 if [[ $newrelicUserApiKey == "" ]]; then      
   echo -e "New Relic opsteam license key [--newrelic-user-api-key] is not provided!\n"
   exit 1
