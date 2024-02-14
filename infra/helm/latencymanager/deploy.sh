@@ -83,7 +83,7 @@ otelcollectors["endpoint"]="http://${otelcollectors[name]}-dep-rec-collector-hea
 # latencymanager
 declare -A latencymanager
 latencymanager["name"]="latencymanager"
-latencymanager["imageName"]="${dockerUsername}/${project}-${latencymanager[name]}-${language}:latest"
+latencymanager["imageName"]="ghcr.io/${githubActor}/${project}-${latencymanager[name]}-${language}:latest"
 latencymanager["namespace"]="${language}"
 
 ###################
