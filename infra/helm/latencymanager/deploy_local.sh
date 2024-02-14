@@ -130,5 +130,5 @@ helm upgrade ${latencymanager[name]} \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
   --set observabilityBackend.name="newrelic" \
   --set observabilityBackend.endpoint="${newrelicGraphqlEndpoint}" \
-  --set observabilityBackend.apiKey="${newrelicApiKey}" \
+  --set observabilityBackend.apiKey="${newrelicUserApiKey}" \
   "./chart"
