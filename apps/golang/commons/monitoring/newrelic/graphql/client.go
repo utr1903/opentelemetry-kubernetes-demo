@@ -126,7 +126,7 @@ func (c *GraphQlClient) substituteTemplateQuery(
 	error,
 ) {
 	// Parse query template
-	c.logger.Log(logrus.ErrorLevel, ctx, "", GRAPHQL_SUBSTITUTING_TEMPLATE_VARIABLES)
+	c.logger.Log(logrus.InfoLevel, ctx, "", GRAPHQL_SUBSTITUTING_TEMPLATE_VARIABLES)
 
 	t, err := template.New(queryTemplateName).Parse(queryTemplate)
 	if err != nil {
@@ -135,7 +135,7 @@ func (c *GraphQlClient) substituteTemplateQuery(
 	}
 
 	// Write substituted query template into buffer
-	c.logger.Log(logrus.ErrorLevel, ctx, "", GRAPHQL_EXECUTING_REQUEST)
+	c.logger.Log(logrus.InfoLevel, ctx, "", GRAPHQL_EXECUTING_REQUEST)
 
 	buf := new(bytes.Buffer)
 	err = t.Execute(buf, queryVariables)
