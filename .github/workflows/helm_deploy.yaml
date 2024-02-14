@@ -12,6 +12,7 @@ on:
           - httpserver
           - kafka
           - kafkaconsumer
+          - latencymanager
           - mysql
           - otelcollector
           - oteloperator
