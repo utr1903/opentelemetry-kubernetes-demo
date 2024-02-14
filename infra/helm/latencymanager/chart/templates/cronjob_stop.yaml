@@ -27,6 +27,8 @@ spec:
                 value: {{ .Values.clusterName }}
               - name: CRON_JOB_SCHEDULE
                 value: "15 * * * *"
+              - name: CRON_JOB_TYPE
+                value: "stop"
               - name: REDIS_SERVER
                 value: {{ .Values.redis.server }}
               - name: REDIS_PORT

@@ -11,8 +11,9 @@ type LatencyManagerConfig struct {
 	// Project name
 	ClusterName string
 
-	// Cron job schedule
+	// Cron job
 	CronJobSchedule string
+	CronJobType     string
 
 	// Redis
 	RedisServer   string
@@ -32,6 +33,7 @@ func NewConfig() *LatencyManagerConfig {
 		ClusterName: os.Getenv("CLUSTER_NAME"),
 
 		CronJobSchedule: os.Getenv("CRON_JOB_SCHEDULE"),
+		CronJobType:     os.Getenv("CRON_JOB_TYPE"),
 
 		RedisServer:   os.Getenv("REDIS_SERVER"),
 		RedisPort:     os.Getenv("REDIS_PORT"),
