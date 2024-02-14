@@ -1,0 +1,3 @@
+# Latency manger
+
+To be implemented...

@@ -3,8 +3,8 @@
 # Get commandline arguments
 while (( "$#" )); do
   case "$1" in
-    --docker-username)
-      dockerUsername="${2}"
+    --github-actor)
+      githubActor="${2}"
       shift
       ;;
     --project)
@@ -13,6 +13,10 @@ while (( "$#" )); do
       ;;
     --instance)
       instance="${2}"
+      shift
+      ;;
+    --cluster-type)
+      clusterType="${2}"
       shift
       ;;
     --language)
@@ -39,6 +43,18 @@ if [[ $instance == "" ]]; then
   exit 1
 fi
 
+# Cluster type
+if [[ $clusterType == "" ]]; then
+  echo "Cluster type [--cluster-type] is not given."
+  exit 1
+else
+  if [[ $clusterType != "aks" && $clusterType != "kind" ]]; then
+    echo "Given cluster type [--cluster-type] is not supported. Supported values are: aks & kind"
+    exit 1
+  fi
+  clusterName="${clusterType}${project}${instance}"
+fi
+
 # Language
 if [[ $language == "" ]]; then
   echo -e "Language [--language] is not provided!\n"
@@ -54,56 +70,40 @@ redis["namespace"]="ops"
 redis["port"]=6379
 redis["password"]="megasecret"
 
-# mysql
-declare -A mysql
-mysql["name"]="mysql"
-mysql["namespace"]="ops"
-mysql["username"]="root"
-mysql["password"]="verysecretpassword"
-mysql["port"]=3306
-mysql["database"]="otel"
-mysql["table"]="${language}"
-
 # otelcollectors
 declare -A otelcollectors
 otelcollectors["name"]="nrotelk8s"
 otelcollectors["namespace"]="ops"
 otelcollectors["endpoint"]="http://${otelcollectors[name]}-dep-rec-collector-headless.${otelcollectors[namespace]}.svc.cluster.local:4317"
 
-# httpserver
-declare -A httpserver
-httpserver["name"]="httpserver"
-httpserver["imageName"]="${dockerUsername}/${project}-${httpserver[name]}-${language}:latest"
-httpserver["namespace"]="${language}"
-httpserver["replicas"]=2
-httpserver["port"]=8080
+# latencymanager
+declare -A latencymanager
+latencymanager["name"]="latencymanager"
+latencymanager["imageName"]="${dockerUsername}/${project}-${latencymanager[name]}-${language}:latest"
+latencymanager["namespace"]="${language}"
 
 ###################
 ### Deploy Helm ###
 ###################
 
-# httpserver
-helm upgrade ${httpserver[name]} \
+# latencymanager
+helm upgrade ${latencymanager[name]} \
   --install \
   --wait \
   --debug \
   --create-namespace \
-  --namespace=${httpserver[namespace]} \
-  --set imageName=${httpserver[imageName]} \
+  --namespace=${latencymanager[namespace]} \
+  --set imageName=${latencymanager[imageName]} \
   --set imagePullPolicy="Always" \
   --set language=${language} \
-  --set name=${httpserver[name]} \
-  --set replicas=${httpserver[replicas]} \
-  --set port=${httpserver[port]} \
-  --set redis.server="${redis[name]}-replicas.${redis[namespace]}.svc.cluster.local" \
+  --set name=${latencymanager[name]} \
+  --set clusterName=${clusterName} \
+  --set redis.server="${redis[name]}-master-0.${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
   --set redis.port=${redis[port]} \
   --set redis.password="${redis[password]}" \
-  --set mysql.server="${mysql[name]}.${mysql[namespace]}.svc.cluster.local" \
-  --set mysql.username=${mysql[username]} \
-  --set mysql.password=${mysql[password]} \
-  --set mysql.port=${mysql[port]} \
-  --set mysql.database=${mysql[database]} \
-  --set mysql.table=${mysql[table]} \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
-  "./chart"
+  --set observabilityBackend.name="newrelic" \
+  --set observabilityBackend.endpoint="https://api.eu.newrelic.com/graphql" \
+  --set observabilityBackend.apiKey="${NEWRELIC_API_KEY}" \
+  "./infra/helm/${application}/chart"

@@ -13,7 +13,9 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	otelmysql "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/mysql"
+	otelredis "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/redis"
 	semconv "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/semconv/v1.24.0"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/redis"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -21,27 +23,38 @@ import (
 const SERVER string = "httpserver"
 
 type Server struct {
-	logger            *logger.Logger
+	logger *logger.Logger
+
 	MySql             *mysql.MySqlDatabase
 	MySqlOtelEnricher *otelmysql.MySqlEnricher
+
+	Redis             *redis.RedisDatabase
+	RedisOtelEnricher *otelredis.RedisEnricher
 }
 
 // Create a HTTP server instance
 func New(
 	log *logger.Logger,
-	db *mysql.MySqlDatabase,
+	mdb *mysql.MySqlDatabase,
+	rdb *redis.RedisDatabase,
 ) *Server {
 
 	return &Server{
 		logger: log,
-		MySql:  db,
+		MySql:  mdb,
 		MySqlOtelEnricher: otelmysql.NewMysqlEnricher(
 			otelmysql.WithTracerName(SERVER),
-			otelmysql.WithServer(db.Opts.Server),
-			otelmysql.WithPort(db.Opts.Port),
-			otelmysql.WithUsername(db.Opts.Username),
-			otelmysql.WithDatabase(db.Opts.Database),
-			otelmysql.WithTable(db.Opts.Table),
+			otelmysql.WithServer(mdb.Opts.Server),
+			otelmysql.WithPort(mdb.Opts.Port),
+			otelmysql.WithUsername(mdb.Opts.Username),
+			otelmysql.WithDatabase(mdb.Opts.Database),
+			otelmysql.WithTable(mdb.Opts.Table),
+		),
+		Redis: rdb,
+		RedisOtelEnricher: otelredis.NewRedisEnricher(
+			otelredis.WithTracerName(SERVER),
+			otelredis.WithServer(rdb.Opts.Server),
+			otelredis.WithPort(rdb.Opts.Port),
 		),
 	}
 }
@@ -60,19 +73,29 @@ func (s *Server) Readyz(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+
+	// MySQL
 	err := s.MySql.Instance.Ping()
 	if err != nil {
-		s.logger.Log(logrus.ErrorLevel, r.Context(), "", err.Error())
+		s.logger.Log(logrus.ErrorLevel, r.Context(), "MySQL is not reachable.", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Not OK"))
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
 	}
+
+	// Redis
+	_, err = s.Redis.Instance.Ping().Result()
+	if err != nil {
+		s.logger.Log(logrus.ErrorLevel, r.Context(), "Redis is not reachable.", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Not OK"))
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 // Server handler
-func (s *Server) Handler(
+func (s *Server) ServerHandler(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -81,10 +104,13 @@ func (s *Server) Handler(
 	parentSpan := trace.SpanFromContext(r.Context())
 	defer parentSpan.End()
 
-	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Handler is triggered")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Server handler is triggered")
 
-	// Perform database query
-	err := s.performQuery(w, r, parentSpan)
+	// Perform Redis database query
+	s.performRedisQuery(r, parentSpan)
+
+	// Perform MySQL database query
+	err := s.performMysqlQuery(w, r, parentSpan)
 	if err != nil {
 		return
 	}
@@ -93,14 +119,40 @@ func (s *Server) Handler(
 	s.createHttpResponse(&w, http.StatusOK, []byte("Success"), parentSpan)
 }
 
+// Performs the database query against the Redis database
+func (s *Server) performRedisQuery(
+	r *http.Request,
+	parentSpan trace.Span,
+) {
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Querying Redis...")
+
+	// Create database span
+	_, dbSpan := s.RedisOtelEnricher.CreateSpan(
+		r.Context(),
+		parentSpan,
+		"GET",
+		commonerr.INCREASE_HTTPSERVER_LATENCY,
+	)
+	defer dbSpan.End()
+
+	// Retrieve variables from Redis
+	increaseLatency, _ := s.Redis.Instance.Get(commonerr.INCREASE_HTTPSERVER_LATENCY).Result()
+	if increaseLatency == "true" {
+		s.logger.Log(logrus.WarnLevel, r.Context(), s.getUser(r), "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is found.")
+		time.Sleep(time.Second)
+	}
+	// Create attributes array
+	attrs := make([]attribute.KeyValue, 0, 1)
+	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(increaseLatency))
+	dbSpan.SetAttributes(attrs...)
+}
+
 // Performs the database query against the MySQL database
-func (s *Server) performQuery(
+func (s *Server) performMysqlQuery(
 	w http.ResponseWriter,
 	r *http.Request,
 	parentSpan trace.Span,
 ) error {
-
-	user := s.getUser(r)
 
 	// Build query
 	dbOperation, dbStatement, err := s.createDbQuery(r)
@@ -122,7 +174,7 @@ func (s *Server) performQuery(
 	err = s.executeDbQuery(ctx, r, dbStatement)
 	if err != nil {
 		msg := "Executing DB query is failed."
-		s.logger.Log(logrus.ErrorLevel, ctx, user, msg)
+		s.logger.Log(logrus.ErrorLevel, ctx, s.getUser(r), msg)
 
 		// Add error to span
 		s.addErrorToSpan(dbSpan, msg, err)
@@ -135,7 +187,7 @@ func (s *Server) performQuery(
 	databaseConnectionError := r.URL.Query().Get(commonerr.DATABASE_CONNECTION_ERROR)
 	if databaseConnectionError == "true" {
 		msg := "Connection to database is lost."
-		s.logger.Log(logrus.ErrorLevel, ctx, user, msg)
+		s.logger.Log(logrus.ErrorLevel, ctx, s.getUser(r), msg)
 
 		// Add error to span
 		s.addErrorToSpan(dbSpan, msg, err)
@@ -155,7 +207,7 @@ func (s *Server) createDbQuery(
 	string,
 	error,
 ) {
-	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Building query...")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Building MySQL query...")
 
 	var dbOperation string
 	var dbStatement string
@@ -180,7 +232,7 @@ func (s *Server) createDbQuery(
 		return "", "", errors.New("method not allowed")
 	}
 
-	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "Query is built.")
+	s.logger.Log(logrus.InfoLevel, r.Context(), s.getUser(r), "MySQL query is built.")
 	return dbOperation, dbStatement, nil
 }
 
@@ -192,7 +244,7 @@ func (s *Server) executeDbQuery(
 ) error {
 
 	user := s.getUser(r)
-	s.logger.Log(logrus.InfoLevel, ctx, user, "Executing query...")
+	s.logger.Log(logrus.InfoLevel, ctx, user, "Executing MySQL query...")
 
 	switch r.Method {
 	case http.MethodGet:
@@ -232,7 +284,7 @@ func (s *Server) executeDbQuery(
 		return errors.New("method not allowed")
 	}
 
-	s.logger.Log(logrus.InfoLevel, ctx, user, "Query is executed.")
+	s.logger.Log(logrus.InfoLevel, ctx, user, "MySQL query is executed.")
 	return nil
 }
 

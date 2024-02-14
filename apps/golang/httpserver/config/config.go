@@ -19,6 +19,11 @@ type HttpServerConfig struct {
 	MysqlDatabase string
 	MysqlTable    string
 	MysqlPort     string
+
+	// Redis
+	RedisServer   string
+	RedisPort     string
+	RedisPassword string
 }
 
 // Creates new config object by parsing environment variables
@@ -33,5 +38,9 @@ func NewConfig() *HttpServerConfig {
 		MysqlDatabase: os.Getenv("MYSQL_DATABASE"),
 		MysqlTable:    os.Getenv("MYSQL_TABLE"),
 		MysqlPort:     os.Getenv("MYSQL_PORT"),
+
+		RedisServer:   os.Getenv("REDIS_SERVER"),
+		RedisPort:     os.Getenv("REDIS_PORT"),
+		RedisPassword: os.Getenv("REDIS_PASSWORD"),
 	}
 }

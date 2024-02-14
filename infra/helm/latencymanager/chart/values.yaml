@@ -1,13 +1,10 @@
 ### Variables
 
 # Name
-name: httpserver
+name: latencymanager
 
-# Port
-port: 8080
-
-# Replicas
-replicas: 1
+# Project name
+clusterName: ""
 
 # Resources
 resources:
@@ -44,17 +41,11 @@ redis:
   # Port
   port: 6379
 
-# MySQL
-mysql:
-  # Server path
-  server: ""
-  # Username
-  username: "root"
-  # Password
-  password: ""
-  # Port
-  port: 3306
-  # Database
-  database: ""
-  # Table
-  table: ""
+# Observability backend
+observabilityBackend:
+  # Name
+  name: newrelic
+  # Endpoint
+  endpoint: "https://api.newrelic.com/graphql"
+  # API key
+  apiKey: ""
