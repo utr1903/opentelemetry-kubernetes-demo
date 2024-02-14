@@ -19,6 +19,10 @@ while (( "$#" )); do
       clusterType="${2}"
       shift
       ;;
+    --application)
+      application="${2}"
+      shift
+      ;;
     --language)
       language="${2}"
       shift
