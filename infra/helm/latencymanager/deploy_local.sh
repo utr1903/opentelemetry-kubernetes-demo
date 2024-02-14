@@ -15,6 +15,10 @@ while (( "$#" )); do
       instance="${2}"
       shift
       ;;
+    --cluster-type)
+      clusterType="${2}"
+      shift
+      ;;
     --language)
       language="${2}"
       shift
@@ -37,6 +41,18 @@ fi
 if [[ $instance == "" ]]; then
   echo -e "Instance [--instance] is not provided!\n"
   exit 1
+fi
+
+# Cluster type
+if [[ $clusterType == "" ]]; then
+  echo "Cluster type [--cluster-type] is not given."
+  exit 1
+else
+  if [[ $clusterType != "aks" && $clusterType != "kind" ]]; then
+    echo "Given cluster type [--cluster-type] is not supported. Supported values are: aks & kind"
+    exit 1
+  fi
+  clusterName="${clusterType}${project}${instance}"
 fi
 
 # Language
@@ -81,9 +97,13 @@ helm upgrade ${latencymanager[name]} \
   --set imagePullPolicy="Always" \
   --set language=${language} \
   --set name=${latencymanager[name]} \
+  --set clusterName=${clusterName} \
   --set redis.server="${redis[name]}-master-0.${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
   --set redis.port=${redis[port]} \
   --set redis.password="${redis[password]}" \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
+  --set observabilityBackend.name="newrelic" \
+  --set observabilityBackend.endpoint="https://api.eu.newrelic.com/graphql" \
+  --set observabilityBackend.apiKey="${NEWRELIC_API_KEY}" \
   "./chart"

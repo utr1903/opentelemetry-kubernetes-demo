@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: "15 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ .Values.name }}
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: {{ .Values.name }}
+            image: {{ .Values.imageName }}
+            imagePullPolicy: {{ .Values.imagePullPolicy }}
+            env:
+              - name: K8S_POD_NAME
+                valueFrom:
+                  fieldRef:
+                    apiVersion: v1
+                    fieldPath: metadata.name
+              - name: CLUSTER_NAME
+                value: {{ .Values.clusterName }}
+              - name: CRON_JOB_SCHEDULE
+                value: "15 * * * *"
+              - name: REDIS_SERVER
+                value: {{ .Values.redis.server }}
+              - name: REDIS_PORT
+                value: "{{ .Values.redis.port }}"
+              - name: REDIS_PASSWORD
+                value: {{ .Values.redis.password }}
+              - name: OTEL_SERVICE_NAME
+                value: "{{ .Values.name }}-{{ .Values.language }}"
+              - name: OTEL_RESOURCE_ATTRIBUTES
+                value: service.name=$(OTEL_SERVICE_NAME),service.instance.id=$(K8S_POD_NAME)
+              - name: OTEL_EXPORTER_TYPE
+                value: {{ .Values.otel.exporter }}
+              - name: OTEL_EXPORTER_OTLP_ENDPOINT
+                value: {{ .Values.otlp.endpoint }}
+              - name: OTEL_LOGS_EXPORTER
+                value: otlp
+              - name: OTEL_EXPORTER_OTLP_HEADERS
+                value: {{ .Values.otlp.headers }}
+              - name: OBSERVABILITY_BACKEND_NAME
+                value: {{ .Values.observabilityBackend.name }}
+              - name: OBSERVABILITY_BACKEND_ENDPOINT
+                value: {{ .Values.observabilityBackend.endpoint }}
+              - name: OBSERVABILITY_BACKEND_API_KEY
+                value: {{ .Values.observabilityBackend.apiKey }}
+            resources:
+              requests:
+                cpu: {{ .Values.resources.requests.cpu }}
+                memory: {{ .Values.resources.requests.memory }}
+              limits:
+                cpu: {{ .Values.resources.limits.cpu }}
+                memory: {{ .Values.resources.limits.memory }}

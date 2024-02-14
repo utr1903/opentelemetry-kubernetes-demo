@@ -3,6 +3,9 @@
 # Name
 name: latencymanager
 
+# Project name
+clusterName: ""
+
 # Resources
 resources:
   # Requests
@@ -37,3 +40,12 @@ redis:
   password: ""
   # Port
   port: 6379
+
+# Observability backend
+observabilityBackend:
+  # Name
+  name: newrelic
+  # Endpoint
+  endpoint: "https://api.newrelic.com/graphql"
+  # API key
+  apiKey: ""
