@@ -23,6 +23,14 @@ while (( "$#" )); do
       language="${2}"
       shift
       ;;
+    --newrelic-graphql-endpoint)
+      newrelicGraphqlEndpoint="${2}"
+      shift
+      ;;
+    --newrelic-user-api-key)
+      newrelicUserApiKey="${2}"
+      shift
+      ;;
     *)
       shift
       ;;
@@ -58,6 +66,23 @@ fi
 # Language
 if [[ $language == "" ]]; then
   echo -e "Language [--language] is not provided!\n"
+  exit 1
+fi
+
+# New Relic endpoint
+if [[ $newrelicGraphqlEndpoint == "" ]]; then
+  echo -e "New Relic OTLP endpoint [--newrelic-graphql-endpoint] is not provided.\n"
+  exit 1
+else
+  if [[ $newrelicGraphqlEndpoint != "https://api.newrelic.com/graphql" && $newrelicGraphqlEndpoint != "https://api.eu.newrelic.com/graphql" ]]; then
+    echo "Given New Relic GraphQL endpoint [--newrelic-graphql-endpoint] is not supported. Supported values are: US -> https://api.newrelic.com/graphql, EU -> https://api.eu.newrelic.com/graphql."
+    exit 1
+  fi
+fi
+
+# New Relic OTLP endpoint
+if [[ $newrelicUserApiKey == "" ]]; then      
+  echo -e "New Relic opsteam license key [--newrelic-user-api-key] is not provided!\n"
   exit 1
 fi
 
@@ -104,6 +129,6 @@ helm upgrade ${latencymanager[name]} \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
   --set observabilityBackend.name="newrelic" \
-  --set observabilityBackend.endpoint="https://api.eu.newrelic.com/graphql" \
-  --set observabilityBackend.apiKey="${NEWRELIC_API_KEY}" \
+  --set observabilityBackend.endpoint="${newrelicGraphqlEndpoint}" \
+  --set observabilityBackend.apiKey="${newrelicApiKey}" \
   "./chart"
