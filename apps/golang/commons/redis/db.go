@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-redis/redis"
 )
@@ -72,9 +73,10 @@ func (r *RedisDatabase) CreateDatabaseConnection() {
 	// Connect to Redis
 	db := redis.NewClient(
 		&redis.Options{
-			Addr:     r.Opts.Server + ":" + r.Opts.Port,
-			Password: r.Opts.Password,
-			DB:       0,
+			Addr:        r.Opts.Server + ":" + r.Opts.Port,
+			Password:    r.Opts.Password,
+			DB:          0,
+			DialTimeout: 15 * time.Second,
 		})
 
 	// Ping the Redis server to ensure the connection is established
