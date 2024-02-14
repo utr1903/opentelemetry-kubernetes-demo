@@ -72,6 +72,7 @@ jobs:
               --github-actor ${{ github.actor }} \
               --project ${{ secrets.PROJECT }} \
               --instance ${{ secrets.INSTANCE }} \
+              --cluster-type aks \
               --application ${chart} \
               --language ${language}
 
