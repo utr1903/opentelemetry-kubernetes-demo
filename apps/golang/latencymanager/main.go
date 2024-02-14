@@ -34,6 +34,6 @@ func main() {
 	defer rdb.Instance.Close()
 
 	// Instantiate and run latency lmgr
-	lmgr := manager.NewLatencyManager(log, rdb, cfg.ServiceName, cfg.CronJobSchedule)
+	lmgr := manager.NewLatencyManager(log, rdb, cfg)
 	lmgr.Run()
 }

@@ -8,9 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 	commonerr "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/error"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/monitoring"
 	otelredis "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/redis"
 	semconv "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/semconv/v1.24.0"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/redis"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/latencymanager/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
@@ -30,14 +32,18 @@ type LatencyManager struct {
 
 	Redis             *redis.RedisDatabase
 	RedisOtelEnricher *otelredis.RedisEnricher
+
+	clusterName                  string
+	observabilityBackendName     string
+	observabilityBackendEndpoint string
+	observabilityBackendApiKey   string
 }
 
 // Create a HTTP server instance
 func NewLatencyManager(
 	log *logger.Logger,
 	rdb *redis.RedisDatabase,
-	cronJobName string,
-	cronJobSchedule string,
+	cfg *config.LatencyManagerConfig,
 ) *LatencyManager {
 
 	// Instantiate trace provider
@@ -47,12 +53,16 @@ func NewLatencyManager(
 	propagator := otel.GetTextMapPropagator()
 
 	return &LatencyManager{
-		logger:          log,
-		tracer:          tracer,
-		propagator:      propagator,
-		cronJobName:     cronJobName,
-		cronJobSchedule: cronJobSchedule,
-		Redis:           rdb,
+		logger:                       log,
+		tracer:                       tracer,
+		propagator:                   propagator,
+		cronJobName:                  cfg.ServiceName,
+		cronJobSchedule:              cfg.CronJobSchedule,
+		clusterName:                  cfg.ClusterName,
+		observabilityBackendName:     cfg.ObservabilityBackendName,
+		observabilityBackendEndpoint: cfg.ObservabilityBackendEndpoint,
+		observabilityBackendApiKey:   cfg.ObservabilityBackendApiKey,
+		Redis:                        rdb,
 		RedisOtelEnricher: otelredis.NewRedisEnricher(
 			otelredis.WithTracerName(LATENCY_MANAGER),
 			otelredis.WithServer(rdb.Opts.Server),
@@ -80,6 +90,11 @@ func (m *LatencyManager) Run() {
 		return
 	}
 
+	// Deploy change marker to defined observability backend
+	err = m.deployMarker(ctx, isLatencyIncreaseEnabled)
+	if err != nil {
+		return
+	}
 	m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Cron job ["+m.cronJobName+"] is finished successfully.")
 }
 
@@ -162,4 +177,37 @@ func (m *LatencyManager) setNewLatencyStatus(
 	}
 	m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is set successfully.")
 	return nil
+}
+
+func (m *LatencyManager) deployMarker(
+	ctx context.Context,
+	isLatencyIncreaseEnabled bool,
+) error {
+	marker := monitoring.NewMarker(m.logger, m.observabilityBackendName, m.observabilityBackendEndpoint, m.observabilityBackendApiKey)
+	if marker == nil {
+		m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "No observability backend is found for marking changes.")
+		return nil
+	}
+
+	if isLatencyIncreaseEnabled {
+		return marker.Run(
+			ctx,
+			"httpserver-golang",
+			"Rolledback to stable version.",
+			"Rollback",
+			"Junior developers should not commit to main.",
+			m.clusterName,
+			"v0.5.3",
+		)
+	} else {
+		return marker.Run(
+			ctx,
+			"httpserver-golang",
+			"Only noobs document changes...",
+			"Add mega feature",
+			"Life changing feature is added!",
+			m.clusterName,
+			"v0.6.0",
+		)
+	}
 }
