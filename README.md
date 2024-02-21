@@ -10,6 +10,23 @@ All the collected telemetry data can be sent to any observability backend. That 
 
 OpenTelemetry not only aims to provide vendor-agnostic instrumentation but language-agnostic as well. This means that whatever programming language you are using, the logic of the applications and the interactions between the applications should generate the same telemetry data in sense of semantic conventions _(example exception: runtime metrics)_. And that is exactly the primary goal of this repo!
 
+## Prerequisites
+
+### Required
+
+- Git
+- Docker
+- Kubectl
+- Helm
+
+### Optional
+
+- Docker Hub account for local development
+- Kind for local development
+- Azure account & CLI for AKS
+- Terraform
+- Golang SDK 1.21 for local development
+
 ## Architecture
 
 The repo replicates a commonly preferred organizational DevOps structure:
