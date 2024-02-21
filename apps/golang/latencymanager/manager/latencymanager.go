@@ -2,7 +2,7 @@ package manager
 
 import (
 	"context"
-	"strconv"
+	"errors"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -29,6 +29,7 @@ type LatencyManager struct {
 
 	cronJobName     string
 	cronJobSchedule string
+	cronJobType     string
 
 	Redis             *redis.RedisDatabase
 	RedisOtelEnricher *otelredis.RedisEnricher
@@ -58,6 +59,7 @@ func NewLatencyManager(
 		propagator:                   propagator,
 		cronJobName:                  cfg.ServiceName,
 		cronJobSchedule:              cfg.CronJobSchedule,
+		cronJobType:                  cfg.CronJobType,
 		clusterName:                  cfg.ClusterName,
 		observabilityBackendName:     cfg.ObservabilityBackendName,
 		observabilityBackendEndpoint: cfg.ObservabilityBackendEndpoint,
@@ -81,17 +83,14 @@ func (m *LatencyManager) Run() {
 
 	m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Cron job ["+m.cronJobName+"] is started.")
 
-	// Get current latency value from Redis
-	isLatencyIncreaseEnabled := m.getCurrentLatencyStatus(ctx, cronJobSpan)
-
 	// Set new latency value to Redis
-	err := m.setNewLatencyStatus(ctx, cronJobSpan, isLatencyIncreaseEnabled)
+	err := m.setNewLatencyStatus(ctx, cronJobSpan)
 	if err != nil {
 		return
 	}
 
 	// Deploy change marker to defined observability backend
-	err = m.deployMarker(ctx, isLatencyIncreaseEnabled)
+	err = m.deployMarker(ctx)
 	if err != nil {
 		return
 	}
@@ -114,42 +113,9 @@ func (m *LatencyManager) getCronJobAttributes() []trace.SpanStartOption {
 	return spanOpts
 }
 
-func (m *LatencyManager) getCurrentLatencyStatus(
-	ctx context.Context,
-	parentSpan trace.Span,
-) bool {
-
-	// Create database span
-	_, dbSpan := m.RedisOtelEnricher.CreateSpan(
-		ctx,
-		parentSpan,
-		"GET",
-		commonerr.INCREASE_HTTPSERVER_LATENCY,
-	)
-	defer dbSpan.End()
-
-	// Retrieve variables from Redis
-	var enabled bool
-	increaseLatency, _ := m.Redis.Instance.Get(commonerr.INCREASE_HTTPSERVER_LATENCY).Result()
-	if increaseLatency == "true" {
-		m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is found.")
-		enabled = true
-	} else {
-		m.logger.Log(logrus.InfoLevel, ctx, LATENCY_MANAGER, "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is not found.")
-		enabled = false
-	}
-	// Create attributes array
-	attrs := make([]attribute.KeyValue, 0, 1)
-	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(strconv.FormatBool(enabled)))
-	dbSpan.SetAttributes(attrs...)
-
-	return enabled
-}
-
 func (m *LatencyManager) setNewLatencyStatus(
 	ctx context.Context,
 	parentSpan trace.Span,
-	isLatencyIncreaseEnabled bool,
 ) error {
 
 	// Create database span
@@ -165,12 +131,21 @@ func (m *LatencyManager) setNewLatencyStatus(
 	attrs := make([]attribute.KeyValue, 0, 1)
 
 	// If latency increase is enabled, disable it & vice versa
-	enableLatencyIncrease := strconv.FormatBool(!isLatencyIncreaseEnabled)
-	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(enableLatencyIncrease))
+	var increaseLatency bool
+	if m.cronJobType == "start" {
+		increaseLatency = true
+	} else if m.cronJobType == "stop" {
+		increaseLatency = false
+	} else {
+		m.logger.Log(logrus.ErrorLevel, ctx, LATENCY_MANAGER, "Given cron job type ["+m.cronJobType+"] is invalid.")
+		return errors.New("cronjob type is invalid")
+	}
+
+	attrs = append(attrs, attribute.Key("increase.httpserver.latency").Bool(increaseLatency))
 	dbSpan.SetAttributes(attrs...)
 
 	// Set the new latency status
-	err := m.Redis.Instance.Set(commonerr.INCREASE_HTTPSERVER_LATENCY, enableLatencyIncrease, time.Hour).Err()
+	err := m.Redis.Instance.Set(commonerr.INCREASE_HTTPSERVER_LATENCY, increaseLatency, time.Hour).Err()
 	if err != nil {
 		m.logger.Log(logrus.ErrorLevel, ctx, LATENCY_MANAGER, "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] could not be set: "+err.Error())
 		return err
@@ -181,7 +156,6 @@ func (m *LatencyManager) setNewLatencyStatus(
 
 func (m *LatencyManager) deployMarker(
 	ctx context.Context,
-	isLatencyIncreaseEnabled bool,
 ) error {
 	marker := monitoring.NewMarker(m.logger, m.observabilityBackendName, m.observabilityBackendEndpoint, m.observabilityBackendApiKey)
 	if marker == nil {
@@ -189,7 +163,17 @@ func (m *LatencyManager) deployMarker(
 		return nil
 	}
 
-	if isLatencyIncreaseEnabled {
+	if m.cronJobType == "start" {
+		return marker.Run(
+			ctx,
+			"httpserver-golang",
+			"Only noobs document changes...",
+			"Add mega feature",
+			"Life changing feature is added!",
+			m.clusterName,
+			"v0.6.0",
+		)
+	} else if m.cronJobType == "stop" {
 		return marker.Run(
 			ctx,
 			"httpserver-golang",
@@ -200,14 +184,7 @@ func (m *LatencyManager) deployMarker(
 			"v0.5.3",
 		)
 	} else {
-		return marker.Run(
-			ctx,
-			"httpserver-golang",
-			"Only noobs document changes...",
-			"Add mega feature",
-			"Life changing feature is added!",
-			m.clusterName,
-			"v0.6.0",
-		)
+		m.logger.Log(logrus.ErrorLevel, ctx, LATENCY_MANAGER, "Given cron job type ["+m.cronJobType+"] is invalid.")
+		return errors.New("cronjob type is invalid")
 	}
 }

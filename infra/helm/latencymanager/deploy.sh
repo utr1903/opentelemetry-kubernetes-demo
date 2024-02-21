@@ -19,8 +19,20 @@ while (( "$#" )); do
       clusterType="${2}"
       shift
       ;;
+    --application)
+      application="${2}"
+      shift
+      ;;
     --language)
       language="${2}"
+      shift
+      ;;
+    --newrelic-graphql-endpoint)
+      newrelicGraphqlEndpoint="${2}"
+      shift
+      ;;
+    --newrelic-user-api-key)
+      newrelicUserApiKey="${2}"
       shift
       ;;
     *)
@@ -61,6 +73,23 @@ if [[ $language == "" ]]; then
   exit 1
 fi
 
+# New Relic GraphQL endpoint
+if [[ $newrelicGraphqlEndpoint == "" ]]; then
+  echo -e "New Relic GraphQL endpoint [--newrelic-graphql-endpoint] is not provided.\n"
+  exit 1
+else
+  if [[ $newrelicGraphqlEndpoint != "https://api.newrelic.com/graphql" && $newrelicGraphqlEndpoint != "https://api.eu.newrelic.com/graphql" ]]; then
+    echo "Given New Relic GraphQL endpoint [--newrelic-graphql-endpoint] is not supported. Supported values are: US -> https://api.newrelic.com/graphql, EU -> https://api.eu.newrelic.com/graphql."
+    exit 1
+  fi
+fi
+
+# New Relic user API key endpoint
+if [[ $newrelicUserApiKey == "" ]]; then      
+  echo -e "New Relic opsteam license key [--newrelic-user-api-key] is not provided!\n"
+  exit 1
+fi
+
 ### Set variables
 
 # redis
@@ -79,7 +108,7 @@ otelcollectors["endpoint"]="http://${otelcollectors[name]}-dep-rec-collector-hea
 # latencymanager
 declare -A latencymanager
 latencymanager["name"]="latencymanager"
-latencymanager["imageName"]="${dockerUsername}/${project}-${latencymanager[name]}-${language}:latest"
+latencymanager["imageName"]="ghcr.io/${githubActor}/${project}-${latencymanager[name]}-${language}:latest"
 latencymanager["namespace"]="${language}"
 
 ###################
@@ -104,6 +133,6 @@ helm upgrade ${latencymanager[name]} \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
   --set observabilityBackend.name="newrelic" \
-  --set observabilityBackend.endpoint="https://api.eu.newrelic.com/graphql" \
-  --set observabilityBackend.apiKey="${NEWRELIC_API_KEY}" \
+  --set observabilityBackend.endpoint="${newrelicGraphqlEndpoint}" \
+  --set observabilityBackend.apiKey="${newrelicUserApiKey}" \
   "./infra/helm/${application}/chart"

@@ -16,6 +16,7 @@ on:
         options:
           - httpserver
           - kafkaconsumer
+          - latencymanager
           - simulator
 
 jobs:

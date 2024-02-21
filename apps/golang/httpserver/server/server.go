@@ -137,13 +137,15 @@ func (s *Server) performRedisQuery(
 
 	// Retrieve variables from Redis
 	increaseLatency, _ := s.Redis.Instance.Get(commonerr.INCREASE_HTTPSERVER_LATENCY).Result()
-	if increaseLatency == "true" {
+	increaseLatencyBool := false
+	if increaseLatency == "1" { // 1 stands for true
+		increaseLatencyBool = true
 		s.logger.Log(logrus.WarnLevel, r.Context(), s.getUser(r), "Redis variable ["+commonerr.INCREASE_HTTPSERVER_LATENCY+"] is found.")
 		time.Sleep(time.Second)
 	}
 	// Create attributes array
 	attrs := make([]attribute.KeyValue, 0, 1)
-	attrs = append(attrs, attribute.Key("increase.httpserver.latency").String(increaseLatency))
+	attrs = append(attrs, attribute.Key("increase.httpserver.latency").Bool(increaseLatencyBool))
 	dbSpan.SetAttributes(attrs...)
 }
 

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ .Values.name }}
+  name: {{ .Values.name }}-start
   namespace: {{ .Release.Namespace }}
 spec:
   schedule: "0 * * * *"
@@ -27,6 +27,8 @@ spec:
                 value: {{ .Values.clusterName }}
               - name: CRON_JOB_SCHEDULE
                 value: "0 * * * *"
+              - name: CRON_JOB_TYPE
+                value: "start"
               - name: REDIS_SERVER
                 value: {{ .Values.redis.server }}
               - name: REDIS_PORT

@@ -12,6 +12,7 @@ on:
           - httpserver
           - kafka
           - kafkaconsumer
+          - latencymanager
           - mysql
           - otelcollector
           - oteloperator
@@ -67,12 +68,25 @@ jobs:
           language=${{ inputs.language }}
 
           if [[ ${language} != '' ]]; then
-            bash ./infra/helm/${chart}/deploy.sh \
-              --github-actor ${{ github.actor }} \
-              --project ${{ secrets.PROJECT }} \
-              --instance ${{ secrets.INSTANCE }} \
-              --application ${chart} \
-              --language ${language}
+
+            if [[ ${chart} == 'latencymanager' ]]; then
+              bash ./infra/helm/${chart}/deploy.sh \
+                --github-actor ${{ github.actor }} \
+                --project ${{ secrets.PROJECT }} \
+                --instance ${{ secrets.INSTANCE }} \
+                --cluster-type aks \
+                --application ${chart} \
+                --language ${language} \
+                --newrelic-graphql-endpoint ${{ secrets.NEWRELIC_GRAPHQL_ENDPOINT }} \
+                --newrelic-user-api-key ${{ secrets.NEWRELIC_USER_API_KEY }}
+            else
+              bash ./infra/helm/${chart}/deploy.sh \
+                --github-actor ${{ github.actor }} \
+                --project ${{ secrets.PROJECT }} \
+                --instance ${{ secrets.INSTANCE }} \
+                --application ${chart} \
+                --language ${language}
+            fi
 
           elif [[ ${chart} == 'otelcollector' ]]; then
             bash ./infra/helm/${chart}/deploy.sh \

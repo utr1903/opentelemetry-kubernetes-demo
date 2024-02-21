@@ -5,7 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
-	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/monitoring/entity"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/monitoring/newrelic/entity"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/monitoring/newrelic/graphql"
 )
 
