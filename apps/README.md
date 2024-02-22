@@ -10,6 +10,7 @@ The workflow is designed to be run on demand and therefore it is to be run manua
 application
 - httpserver
 - kafkaconsumer
+- latencymanager
 - simulator
 ```
 

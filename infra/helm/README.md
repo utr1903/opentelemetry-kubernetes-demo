@@ -8,14 +8,16 @@ In order to run the environment properly, the applications should be deployed in
 4. [kafka](/infra/helm/kafka/) & [mysql](/infra/helm/mysql/)
 5. [httpserver](/infra/helm/httpserver/) & [kafkaconsumer](/infra/helm/kafkaconsumer/)
 6. [simulator](/infra/helm/simulator/)
+7. [latencymanager](/infra/helm/latencymanager/)
 
 ## Dependencies
 
 - `oteloperator` requires `cert-manager` for certificates.
 - `otelcollector` requires `oteloperator` for CRDs and Target Allocator.
-- `httpserver` requires `mysql` & `otelcollector`.
+- `httpserver` requires `redis`, `mysql` & `otelcollector`.
 - `kafkaconsumer` requires `mysql`, `kafka` & `otelcollector`.
 - `simulator` requires `kafka`, `kafkaconsumer`, `httpserver` & `otelcollector`.
+- `latencymanager` requires `redis` & `otelcollector`.
 
 ## Helm deployment
 
@@ -29,9 +31,11 @@ chart
 - httpserver
 - kafka
 - kafkaconsumer
+- latencymanager
 - mysql
 - otelcollector
 - oteloperator
+- redis
 - simulator
 ```
 
@@ -46,9 +50,9 @@ language
 
 **IMPORTANT**
 
-The deployment of the charts `cert-manager`, `kafka`, `mysql`, `oteloperator` & `otelcollector` should leave the `language` input empty! They are using remote Helm charts for deployment.
+The deployment of the charts `cert-manager`, `kafka`, `mysql`, `oteloperator`, `otelcollector` & `redis` should leave the `language` input empty! They are using remote Helm charts for deployment.
 
-On the other hand, `language` is required for the charts `httpserver`, `kafkaconsumer` & `simulator` because they are using local Helm charts!
+On the other hand, `language` is required for the charts `httpserver`, `kafkaconsumer`,`latencymanager` & `simulator` because they are using local Helm charts!
 
 ## Local development
 
@@ -56,7 +60,7 @@ When you are developing locally, you wouldn't want to push your code to Github, 
 
 ### Remote Helm charts
 
-The deployment of the charts `cert-manager`, `oteloperator`, `kafka` & `mysql` are fairly simple. Just change directory to their corresponding folders and run the `deploy.sh` script. It will automatically deploy the remote Helm charts onto your `kind` cluster with necessary configuration.
+The deployment of the charts `cert-manager`, `oteloperator`, `kafka`, `mysql` & `redis` are fairly simple. Just change directory to their corresponding folders and run the `deploy.sh` script. It will automatically deploy the remote Helm charts onto your `kind` cluster with necessary configuration.
 
 The `otelcollector` is the key component of this repository. This is a special implementation of various types of collectors and is the hub for all the telemetry data collected throughout the cluster. For detailed explanation of this Helm chart, refer to it's actual [repository](https://github.com/newrelic-experimental/monitoring-kubernetes-with-opentelemetry)!
 
@@ -79,7 +83,7 @@ bash deploy.sh --project myproj --instance 001 --cluster-type kind --newrelic-ot
 
 ### Local Helm charts
 
-Our own applications `httpserver`, `kafkaconsumer` & `simulator` have their own local Helm templates and thereby are to be deployed with the local Helm configuration. You can run the `/infra/helm/${language}/deploy_local.sh` scripts in each application.
+Our own applications `httpserver`, `kafkaconsumer`, `latencymanager` & `simulator` have their own local Helm templates and thereby are to be deployed with the local Helm configuration. You can run the `/infra/helm/${language}/deploy_local.sh` scripts in each application.
 
 Example (`httpserver`):
 
