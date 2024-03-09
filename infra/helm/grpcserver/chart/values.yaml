@@ -1,0 +1,60 @@
+### Variables
+
+# Name
+name: grpcserver
+
+# Port
+port: 8080
+
+# Replicas
+replicas: 1
+
+# Resources
+resources:
+  # Requests
+  requests:
+    # CPU
+    cpu: 20m
+    # Memory
+    memory: 50Mi
+  # Limits
+  limits:
+    # CPU
+    cpu: 800m
+    # Memory
+    memory: 1000Mi
+
+# OTel
+otel:
+  exporter: "stdout"
+
+# OTLP
+otlp:
+  # Endpoint  
+  endpoint: "https://otlp.nr-data.net"
+  # Headers
+  headers: ""
+
+# Redis
+redis:
+  # Server path
+  server: ""
+  # Password
+  password: ""
+  # Port
+  port: 6379
+
+# Mongo
+mongo:
+  # Server path
+  server: ""
+  # Username
+  username: "root"
+  # Password
+  password: ""
+  # Port
+  port: 27017
+  # Database
+  database: ""
+  # Table
+  table: ""

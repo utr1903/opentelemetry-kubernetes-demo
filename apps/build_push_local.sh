@@ -42,14 +42,23 @@ if [[ $language != "golang" ]]; then
   exit 1
 fi
 
-httpserverImageName="${project}-httpserver-${language}:latest"
 kafkaconsumerImageName="${project}-kafkaconsumer-${language}:latest"
+httpserverImageName="${project}-httpserver-${language}:latest"
+grpcserverImageName="${project}-grpcserver-${language}:latest"
 simulatorImageName="${project}-simulator-${language}:latest"
 latencymanagerImageName="${project}-latencymanager-${language}:latest"
 
 ####################
 ### Build & Push ###
 ####################
+
+# kafkaconsumer
+docker build \
+  --platform "linux/${platform}" \
+  --tag "${dockerUsername}/${kafkaconsumerImageName}" \
+  --build-arg="APP_NAME=kafkaconsumer" \
+  "./${language}/."
+docker push "${dockerUsername}/${kafkaconsumerImageName}"
 
 # httpserver
 docker build \
@@ -59,13 +68,13 @@ docker build \
   "./${language}/."
 docker push "${dockerUsername}/${httpserverImageName}"
 
-# kafkaconsumer
+# grpcserver
 docker build \
   --platform "linux/${platform}" \
-  --tag "${dockerUsername}/${kafkaconsumerImageName}" \
-  --build-arg="APP_NAME=kafkaconsumer" \
+  --tag "${dockerUsername}/${grpcserverImageName}" \
+  --build-arg="APP_NAME=grpcserver" \
   "./${language}/."
-docker push "${dockerUsername}/${kafkaconsumerImageName}"
+docker push "${dockerUsername}/${grpcserverImageName}"
 
 # simulator
 docker build \
