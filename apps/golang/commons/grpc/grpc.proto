@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = ".";
+
+message Request {
+  bool isDelete = 1;
+}
+
+message Response {
+  bool isSucceeded = 1;
+}
+
+service Grpc {
+  rpc Get(Request) returns (Response);
+  rpc Delete(Request) returns (Response);
+}

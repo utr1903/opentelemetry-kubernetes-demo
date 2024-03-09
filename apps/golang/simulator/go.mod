@@ -8,6 +8,7 @@ require (
 	github.com/IBM/sarama v1.42.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons v0.0.0
+	google.golang.org/grpc v1.60.1
 )
 
 require (
@@ -48,6 +49,5 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
-	google.golang.org/grpc v1.60.1 // indirect
 	google.golang.org/protobuf v1.32.0 // indirect
 )
