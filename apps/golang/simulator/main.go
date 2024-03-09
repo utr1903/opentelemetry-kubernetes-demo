@@ -35,8 +35,8 @@ func main() {
 	otel.StartCollectingRuntimeMetrics()
 
 	// Simulate
-	// go simulateKafkaConsumer(cfg, log)
-	// go simulateHttpServer(cfg, log)
+	go simulateKafkaConsumer(cfg, log)
+	go simulateHttpServer(cfg, log)
 	go simulateGrpcServer(cfg, log)
 
 	// Wait for signal to shutdown the simulator
@@ -85,7 +85,13 @@ func simulateGrpcServer(
 	log *logger.Logger,
 ) {
 	// Instantiate HTTP server simulator
-	grpcserverSimulator := grpcclient.New()
+	grpcserverSimulator := grpcclient.New(
+		log,
+		grpcclient.WithServiceName(cfg.ServiceName),
+		grpcclient.WithRequestInterval(cfg.GrpcserverRequestInterval),
+		grpcclient.WithServerEndpoint(cfg.GrpcserverEndpoint),
+		grpcclient.WithServerPort(cfg.GrpcserverPort),
+	)
 
 	// Simulate
 	grpcserverSimulator.Simulate()

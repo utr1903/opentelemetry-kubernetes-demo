@@ -4,14 +4,20 @@ import (
 	"context"
 
 	pb "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/grpc/proto"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 )
 
 type GrpcServer struct {
 	pb.GrpcServer
+	logger *logger.Logger
 }
 
-func New() *GrpcServer {
-	return &GrpcServer{}
+func New(
+	log *logger.Logger,
+) *GrpcServer {
+	return &GrpcServer{
+		logger: log,
+	}
 }
 
 func (s *GrpcServer) Get(

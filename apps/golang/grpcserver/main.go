@@ -35,21 +35,20 @@ func main() {
 	otel.StartCollectingRuntimeMetrics()
 
 	// Create server
-	// lis, err := net.Listen("tcp", ":"+cfg.ServicePort)
-	lis, err := net.Listen("tcp", "localhost:8080")
+	lis, err := net.Listen("tcp", ":"+cfg.ServicePort)
 	if err != nil {
 		log.Log(logrus.ErrorLevel, ctx, "", "Failed to create listener!")
 		panic(err)
 	}
 
-	// Instantiate grpc server
+	// Instantiate gRPC server
 	grpcsrv := grpc.NewServer()
 
 	// Instantiate & register server implementation
-	srv := server.New()
+	srv := server.New(log)
 	pb.RegisterGrpcServer(grpcsrv, srv)
 
-	// Start server
+	// Start gRPC server
 	err = grpcsrv.Serve(lis)
 	if err != nil {
 		log.Log(logrus.ErrorLevel, ctx, "", "Failed to create gRPC server!")

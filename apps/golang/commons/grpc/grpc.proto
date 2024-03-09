@@ -3,7 +3,7 @@ syntax = "proto3";
 option go_package = ".";
 
 message Request {
-  bool isDelete = 1;
+  
 }
 
 message Response {
