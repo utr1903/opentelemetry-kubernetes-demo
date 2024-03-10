@@ -31,18 +31,6 @@ spec:
               value: "{{ .Values.redis.port }}"
             - name: REDIS_PASSWORD
               value: {{ .Values.redis.password }}
-            - name: MONGO_SERVER
-              value: {{ .Values.mongo.server }}
-            - name: MONGO_USERNAME
-              value: {{ .Values.mongo.username }}
-            - name: MONGO_PASSWORD
-              value: {{ .Values.mongo.password }}
-            - name: MONGO_PORT
-              value: "{{ .Values.mongo.port }}"
-            - name: MONGO_DATABASE
-              value: {{ .Values.mongo.database }}
-            - name: MONGO_TABLE
-              value: {{ .Values.mongo.table }}
             - name: OTEL_SERVICE_NAME
               value: "{{ .Values.name }}-{{ .Values.language }}"
             - name: OTEL_RESOURCE_ATTRIBUTES

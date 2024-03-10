@@ -54,16 +54,6 @@ redis["namespace"]="ops"
 redis["port"]=6379
 redis["password"]="megasecret"
 
-# mongo
-declare -A mongo
-mongo["name"]="mongo"
-mongo["namespace"]="ops"
-mongo["username"]="root"
-mongo["password"]="verysecretpassword"
-mongo["port"]=27017
-mongo["database"]="otel"
-mongo["table"]="${language}"
-
 # otelcollectors
 declare -A otelcollectors
 otelcollectors["name"]="nrotelk8s"
@@ -98,12 +88,6 @@ helm upgrade ${grpcserver[name]} \
   --set redis.server="${redis[name]}-replicas.${redis[namespace]}.svc.cluster.local" \
   --set redis.port=${redis[port]} \
   --set redis.password="${redis[password]}" \
-  --set mongo.server="${mongo[name]}.${mongo[namespace]}.svc.cluster.local" \
-  --set mongo.username=${mongo[username]} \
-  --set mongo.password=${mongo[password]} \
-  --set mongo.port=${mongo[port]} \
-  --set mongo.database=${mongo[database]} \
-  --set mongo.table=${mongo[table]} \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
   "./chart"
