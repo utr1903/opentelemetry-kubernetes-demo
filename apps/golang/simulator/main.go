@@ -94,5 +94,5 @@ func simulateGrpcServer(
 	)
 
 	// Simulate
-	grpcserverSimulator.Simulate()
+	grpcserverSimulator.Simulate(cfg.Users)
 }

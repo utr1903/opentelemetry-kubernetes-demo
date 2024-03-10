@@ -10,6 +10,7 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/grpcserver/config"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/grpcserver/server"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 )
 
@@ -41,8 +42,13 @@ func main() {
 		panic(err)
 	}
 
+	log.Log(logrus.InfoLevel, ctx, "", "Listener is created.")
+
 	// Instantiate gRPC server
-	grpcsrv := grpc.NewServer()
+	grpcsrv := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
+	log.Log(logrus.InfoLevel, ctx, "", "gRPC server is created.")
 
 	// Instantiate & register server implementation
 	srv := server.New(log)
@@ -51,7 +57,7 @@ func main() {
 	// Start gRPC server
 	err = grpcsrv.Serve(lis)
 	if err != nil {
-		log.Log(logrus.ErrorLevel, ctx, "", "Failed to create gRPC server!")
+		log.Log(logrus.ErrorLevel, ctx, "", "Failed to run gRPC server!")
 		panic(err)
 	}
 }

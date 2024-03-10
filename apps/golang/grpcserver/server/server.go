@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	pb "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/grpc/proto"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 )
@@ -27,9 +28,13 @@ func (s *GrpcServer) Get(
 	*pb.Response,
 	error,
 ) {
-	return &pb.Response{
+	s.logger.Log(logrus.InfoLevel, ctx, "", "List method is triggered...")
+	res := &pb.Response{
 		IsSucceeded: true,
-	}, nil
+	}
+
+	s.logger.Log(logrus.InfoLevel, ctx, "", "List method is performed...")
+	return res, nil
 }
 
 func (s *GrpcServer) Delete(
@@ -39,7 +44,11 @@ func (s *GrpcServer) Delete(
 	*pb.Response,
 	error,
 ) {
-	return &pb.Response{
+	s.logger.Log(logrus.InfoLevel, ctx, "", "Delete method is triggered...")
+	res := &pb.Response{
 		IsSucceeded: true,
-	}, nil
+	}
+
+	s.logger.Log(logrus.InfoLevel, ctx, "", "Delete method is performed...")
+	return res, nil
 }

@@ -3,12 +3,15 @@ package grpcclient
 import (
 	"context"
 	"math/rand"
+	"os"
+	"os/signal"
 	"strconv"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/grpc/proto"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -92,10 +95,13 @@ func WithServerPort(serverPort string) OptFunc {
 }
 
 // Starts simulating gRPC server
-func (g *GrpcServerSimulator) Simulate() {
+func (g *GrpcServerSimulator) Simulate(
+	users []string,
+) {
 
-	// Get context
-	ctx := context.Background()
+	// Wait for signal to shutdown the simulator
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
 
 	// Create connection to gRPC server
 	conn, err := grpc.Dial(
@@ -103,6 +109,7 @@ func (g *GrpcServerSimulator) Simulate() {
 		grpc.WithTransportCredentials(
 			insecure.NewCredentials(),
 		),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		g.logger.Log(logrus.ErrorLevel, ctx, "", "Creating gRPC server connection is failed.")
@@ -119,9 +126,13 @@ func (g *GrpcServerSimulator) Simulate() {
 			// Make request after each interval
 			time.Sleep(time.Duration(g.Opts.RequestInterval) * time.Millisecond)
 
+			user := users[g.Randomizer.Intn(len(users))]
+			g.logger.Log(logrus.InfoLevel, ctx, user, "Preparing list gRPC call...")
 			_, err := client.Get(ctx, &pb.Request{})
 			if err != nil {
-				g.logger.Log(logrus.ErrorLevel, ctx, "", "List method is failed.")
+				g.logger.Log(logrus.ErrorLevel, ctx, user, "gRPC list method is failed: "+err.Error())
+			} else {
+				g.logger.Log(logrus.InfoLevel, ctx, user, "gRPC list call is succeeded.")
 			}
 		}
 	}()
@@ -133,10 +144,16 @@ func (g *GrpcServerSimulator) Simulate() {
 			// Make request after each interval
 			time.Sleep(time.Duration(g.Opts.RequestInterval) * time.Millisecond)
 
+			user := users[g.Randomizer.Intn(len(users))]
+			g.logger.Log(logrus.InfoLevel, ctx, user, "Preparing delete gRPC call...")
 			_, err := client.Delete(ctx, &pb.Request{})
 			if err != nil {
-				g.logger.Log(logrus.ErrorLevel, ctx, "", "Delete method is failed.")
+				g.logger.Log(logrus.ErrorLevel, ctx, user, "gRPC delete method is failed: "+err.Error())
+			} else {
+				g.logger.Log(logrus.InfoLevel, ctx, user, "gRPC delete call is succeeded.")
 			}
 		}
 	}()
+
+	<-ctx.Done()
 }

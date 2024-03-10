@@ -7,6 +7,7 @@ replace github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons => 
 require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons v0.0.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0
 	google.golang.org/grpc v1.62.1
 )
 
