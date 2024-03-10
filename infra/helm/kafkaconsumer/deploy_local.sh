@@ -53,6 +53,13 @@ kafka["name"]="kafka"
 kafka["namespace"]="ops"
 kafka["topic"]="${language}"
 
+# redis
+declare -A redis
+redis["name"]="redis"
+redis["namespace"]="ops"
+redis["port"]=6379
+redis["password"]="megasecret"
+
 # mysql
 declare -A mysql
 mysql["name"]="mysql"
@@ -98,6 +105,9 @@ helm upgrade ${kafkaconsumer[name]} \
   --set kafka.address="${kafka[name]}.${kafka[namespace]}.svc.cluster.local:9092" \
   --set kafka.topic=${kafka[topic]} \
   --set kafka.groupId=${kafkaconsumer[name]} \
+  --set redis.server="${redis[name]}-master-0.${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
+  --set redis.port=${redis[port]} \
+  --set redis.password="${redis[password]}" \
   --set mysql.server="${mysql[name]}.${mysql[namespace]}.svc.cluster.local" \
   --set mysql.username=${mysql[username]} \
   --set mysql.password=${mysql[password]} \

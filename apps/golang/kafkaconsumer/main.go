@@ -11,6 +11,7 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/redis"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/config"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/consumer"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/kafkaconsumer/server"
@@ -39,7 +40,7 @@ func main() {
 	otel.StartCollectingRuntimeMetrics()
 
 	// Instantiate MySQL database
-	db := mysql.New(
+	mdb := mysql.New(
 		mysql.WithServer(cfg.MysqlServer),
 		mysql.WithPort(cfg.MysqlPort),
 		mysql.WithUsername(cfg.MysqlUsername),
@@ -47,14 +48,23 @@ func main() {
 		mysql.WithDatabase(cfg.MysqlDatabase),
 		mysql.WithTable(cfg.MysqlTable),
 	)
-	db.CreateDatabaseConnection()
-	defer db.Instance.Close()
+	mdb.CreateDatabaseConnection()
+	defer mdb.Instance.Close()
 
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
+	// Instantiate Redis database
+	rdb := redis.New(
+		redis.WithServer(cfg.RedisServer),
+		redis.WithPort(cfg.RedisPort),
+		redis.WithPassword(cfg.RedisPassword),
+	)
+	rdb.CreateDatabaseConnection()
+	defer rdb.Instance.Close()
+
 	// Instantiate Kafka consumer
-	kafkaConsumer := consumer.New(log, db,
+	kafkaConsumer := consumer.New(log, rdb, mdb,
 		consumer.WithServiceName(cfg.ServiceName),
 		consumer.WithBrokerAddress(cfg.KafkaBrokerAddress),
 		consumer.WithBrokerTopic(cfg.KafkaTopic),
@@ -65,7 +75,7 @@ func main() {
 	}
 
 	// Instantiate server
-	server := server.New(log, db)
+	server := server.New(log, mdb)
 
 	// Health checks
 	http.Handle("/livez", http.HandlerFunc(server.Livez))

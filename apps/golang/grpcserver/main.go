@@ -8,6 +8,7 @@ import (
 	pb "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/grpc/proto"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/redis"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/grpcserver/config"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/grpcserver/server"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -35,6 +36,15 @@ func main() {
 	// Collect runtime metrics
 	otel.StartCollectingRuntimeMetrics()
 
+	// Instantiate Redis database
+	rdb := redis.New(
+		redis.WithServer(cfg.RedisServer),
+		redis.WithPort(cfg.RedisPort),
+		redis.WithPassword(cfg.RedisPassword),
+	)
+	rdb.CreateDatabaseConnection()
+	defer rdb.Instance.Close()
+
 	// Create server
 	lis, err := net.Listen("tcp", ":"+cfg.ServicePort)
 	if err != nil {
@@ -51,7 +61,7 @@ func main() {
 	log.Log(logrus.InfoLevel, ctx, "", "gRPC server is created.")
 
 	// Instantiate & register server implementation
-	srv := server.New(log)
+	srv := server.New(log, rdb)
 	pb.RegisterGrpcServer(grpcsrv, srv)
 
 	// Start gRPC server

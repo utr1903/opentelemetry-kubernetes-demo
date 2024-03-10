@@ -31,6 +31,12 @@ spec:
               value: {{ .Values.kafka.topic }}
             - name: KAFKA_CONSUMER_GROUP_ID
               value: {{ .Values.kafka.groupId }}
+            - name: REDIS_SERVER
+              value: {{ .Values.redis.server }}
+            - name: REDIS_PORT
+              value: "{{ .Values.redis.port }}"
+            - name: REDIS_PASSWORD
+              value: {{ .Values.redis.password }}
             - name: MYSQL_SERVER
               value: {{ .Values.mysql.server }}
             - name: MYSQL_USERNAME

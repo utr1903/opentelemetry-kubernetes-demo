@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/sirupsen/logrus"
@@ -15,7 +16,9 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/mysql"
 	otelkafka "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/kafka"
 	otelmysql "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/mysql"
+	otelredis "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/redis"
 	semconv "github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel/semconv/v1.24.0"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/redis"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -40,15 +43,20 @@ func defaultOpts() *Opts {
 }
 
 type KafkaConsumer struct {
-	logger            *logger.Logger
-	Opts              *Opts
+	logger *logger.Logger
+	Opts   *Opts
+
 	MySql             *mysql.MySqlDatabase
 	MySqlOtelEnricher *otelmysql.MySqlEnricher
+
+	Redis             *redis.RedisDatabase
+	RedisOtelEnricher *otelredis.RedisEnricher
 }
 
 // Create a kafka consumer instance
 func New(
 	log *logger.Logger,
+	rdb *redis.RedisDatabase,
 	db *mysql.MySqlDatabase,
 	optFuncs ...OptFunc,
 ) *KafkaConsumer {
@@ -71,6 +79,12 @@ func New(
 			otelmysql.WithUsername(db.Opts.Username),
 			otelmysql.WithDatabase(db.Opts.Database),
 			otelmysql.WithTable(db.Opts.Table),
+		),
+		Redis: rdb,
+		RedisOtelEnricher: otelredis.NewRedisEnricher(
+			otelredis.WithTracerName(CONSUMER),
+			otelredis.WithServer(rdb.Opts.Server),
+			otelredis.WithPort(rdb.Opts.Port),
 		),
 		Opts: opts,
 	}
@@ -128,6 +142,8 @@ func (k *KafkaConsumer) StartConsumerGroup(
 		Opts:              k.Opts,
 		MySql:             k.MySql,
 		MySqlOtelEnricher: k.MySqlOtelEnricher,
+		Redis:             k.Redis,
+		RedisOtelEnricher: k.RedisOtelEnricher,
 		Consumer:          otelconsumer,
 	}
 
@@ -170,6 +186,8 @@ type groupHandler struct {
 	Opts              *Opts
 	MySql             *mysql.MySqlDatabase
 	MySqlOtelEnricher *otelmysql.MySqlEnricher
+	Redis             *redis.RedisDatabase
+	RedisOtelEnricher *otelredis.RedisEnricher
 	Consumer          *otelkafka.KafkaConsumer
 }
 
@@ -218,8 +236,15 @@ func (g *groupHandler) consumeMessage(
 
 		g.logger.Log(logrus.InfoLevel, ctx, name, "Consuming message...")
 
-		// Store it into db
-		err = g.storeIntoDb(ctx, name, errType)
+		// Put it into Redis
+		err = g.setIntoRedis(ctx, name)
+		if err != nil {
+			g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed: "+err.Error())
+			return err
+		}
+
+		// Store it into MySQL
+		err = g.storeIntoMysql(ctx, name, errType)
 		if err != nil {
 			g.logger.Log(logrus.ErrorLevel, ctx, name, "Consuming message is failed: "+err.Error())
 			return err
@@ -273,7 +298,32 @@ func (g *groupHandler) parseMessageBody(
 	return dto, nil
 }
 
-func (g *groupHandler) storeIntoDb(
+func (g *groupHandler) setIntoRedis(
+	ctx context.Context,
+	name string,
+) error {
+
+	// Create database span
+	parentSpan := trace.SpanFromContext(ctx)
+	_, dbSpan := g.RedisOtelEnricher.CreateSpan(
+		ctx,
+		parentSpan,
+		"SET",
+		"name",
+	)
+	defer dbSpan.End()
+
+	// Set the new latency status
+	err := g.Redis.Instance.Set("name", name, time.Hour).Err()
+	if err != nil {
+		g.logger.Log(logrus.ErrorLevel, ctx, CONSUMER, "Redis variable [name] could not be set: "+err.Error())
+		return err
+	}
+	g.logger.Log(logrus.InfoLevel, ctx, CONSUMER, "Redis variable [name] is set successfully.")
+	return nil
+}
+
+func (g *groupHandler) storeIntoMysql(
 	ctx context.Context,
 	name string,
 	errType string,
