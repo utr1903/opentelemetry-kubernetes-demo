@@ -15,6 +15,7 @@ on:
         description: Name of the application
         options:
           - httpserver
+          - grpcserver
           - kafkaconsumer
           - latencymanager
           - simulator

@@ -8,6 +8,7 @@ import (
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/logger"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/commons/otel"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/simulator/config"
+	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/simulator/grpcclient"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/simulator/httpclient"
 	"github.com/utr1903/opentelemetry-kubernetes-demo/apps/golang/simulator/kafkaproducer"
 )
@@ -34,14 +35,32 @@ func main() {
 	otel.StartCollectingRuntimeMetrics()
 
 	// Simulate
-	go simulateHttpServer(cfg, log)
 	go simulateKafkaConsumer(cfg, log)
+	go simulateHttpServer(cfg, log)
+	go simulateGrpcServer(cfg, log)
 
 	// Wait for signal to shutdown the simulator
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	<-ctx.Done()
+}
+
+func simulateKafkaConsumer(
+	cfg *config.SimulatorConfig,
+	log *logger.Logger,
+) {
+	// Instantiate Kafka consumer simulator
+	kafkaConsumerSimulator := kafkaproducer.New(
+		log,
+		kafkaproducer.WithServiceName(cfg.ServiceName),
+		kafkaproducer.WithRequestInterval(cfg.KafkaRequestInterval),
+		kafkaproducer.WithBrokerAddress(cfg.KafkaBrokerAddress),
+		kafkaproducer.WithBrokerTopic(cfg.KafkaTopic),
+	)
+
+	// Simulate
+	kafkaConsumerSimulator.Simulate(cfg.Users)
 }
 
 func simulateHttpServer(
@@ -61,19 +80,19 @@ func simulateHttpServer(
 	httpserverSimulator.Simulate(cfg.Users)
 }
 
-func simulateKafkaConsumer(
+func simulateGrpcServer(
 	cfg *config.SimulatorConfig,
 	log *logger.Logger,
 ) {
-	// Instantiate Kafka consumer simulator
-	kafkaConsumerSimulator := kafkaproducer.New(
+	// Instantiate HTTP server simulator
+	grpcserverSimulator := grpcclient.New(
 		log,
-		kafkaproducer.WithServiceName(cfg.ServiceName),
-		kafkaproducer.WithRequestInterval(cfg.KafkaRequestInterval),
-		kafkaproducer.WithBrokerAddress(cfg.KafkaBrokerAddress),
-		kafkaproducer.WithBrokerTopic(cfg.KafkaTopic),
+		grpcclient.WithServiceName(cfg.ServiceName),
+		grpcclient.WithRequestInterval(cfg.GrpcserverRequestInterval),
+		grpcclient.WithServerEndpoint(cfg.GrpcserverEndpoint),
+		grpcclient.WithServerPort(cfg.GrpcserverPort),
 	)
 
 	// Simulate
-	kafkaConsumerSimulator.Simulate(cfg.Users)
+	grpcserverSimulator.Simulate(cfg.Users)
 }
