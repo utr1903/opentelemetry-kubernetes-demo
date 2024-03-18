@@ -85,7 +85,7 @@ helm upgrade ${grpcserver[name]} \
   --set name=${grpcserver[name]} \
   --set replicas=${grpcserver[replicas]} \
   --set port=${grpcserver[port]} \
-  --set redis.server="${redis[name]}-replicas.${redis[namespace]}.svc.cluster.local" \
+  --set redis.server="${redis[name]}-master-0.${redis[name]}-headless.${redis[namespace]}.svc.cluster.local" \
   --set redis.port=${redis[port]} \
   --set redis.password="${redis[password]}" \
   --set otel.exporter="otlp" \
