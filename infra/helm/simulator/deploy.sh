@@ -75,6 +75,12 @@ httpserver["name"]="httpserver"
 httpserver["namespace"]="${language}"
 httpserver["port"]=8080
 
+# grpcserver
+declare -A grpcserver
+grpcserver["name"]="grpcserver"
+grpcserver["namespace"]="${language}"
+grpcserver["port"]=8080
+
 # simulator
 declare -A simulator
 simulator["name"]="simulator"
@@ -84,6 +90,7 @@ simulator["replicas"]=3
 simulator["port"]=8080
 simulator["httpInterval"]=2000
 simulator["kafkaInterval"]=1000
+simulator["grpcInterval"]=2000
 
 ###################
 ### Deploy Helm ###
@@ -102,12 +109,15 @@ helm upgrade ${simulator[name]} \
   --set name=${simulator[name]} \
   --set replicas=${simulator[replicas]} \
   --set port=${simulator[port]} \
-  --set httpserver.requestInterval=${simulator[httpInterval]} \
-  --set httpserver.endpoint="${httpserver[name]}.${httpserver[namespace]}.svc.cluster.local" \
-  --set httpserver.port="${httpserver[port]}" \
   --set kafka.address="${kafka[name]}.${kafka[namespace]}.svc.cluster.local:9092" \
   --set kafka.topic=${kafka[topic]} \
   --set kafka.requestInterval=${simulator[kafkaInterval]} \
+  --set httpserver.requestInterval=${simulator[httpInterval]} \
+  --set httpserver.endpoint="${httpserver[name]}.${httpserver[namespace]}.svc.cluster.local" \
+  --set httpserver.port="${httpserver[port]}" \
+  --set grpcserver.requestInterval=${simulator[grpcInterval]} \
+  --set grpcserver.endpoint="${grpcserver[name]}.${grpcserver[namespace]}.svc.cluster.local" \
+  --set grpcserver.port="${grpcserver[port]}" \
   --set otel.exporter="otlp" \
   --set otlp.endpoint="${otelcollectors[endpoint]}" \
   "./infra/helm/${application}/chart"
