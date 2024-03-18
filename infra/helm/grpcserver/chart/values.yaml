@@ -43,18 +43,3 @@ redis:
   password: ""
   # Port
   port: 6379
-
-# Mongo
-mongo:
-  # Server path
-  server: ""
-  # Username
-  username: "root"
-  # Password
-  password: ""
-  # Port
-  port: 27017
-  # Database
-  database: ""
-  # Table
-  table: ""
