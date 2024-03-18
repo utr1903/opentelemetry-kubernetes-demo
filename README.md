@@ -36,9 +36,16 @@ The repo replicates a commonly preferred organizational DevOps structure:
 
 It can be stated that the tasks of individual teams are sort of loosely decoupled from each other. In this repo, every programming language stands for a different `devteam` where the central maintanence team is referred as the `opsteam` and responsible for the cluster components and the common resources which the `devteams` use (Kafka, MySQL). The `opsteam` uses the `ops` namespace and the `devteams` use their `<language>` namespace (e.g. `golang`) for their applications.
 
-The current business logic is simple. Every team has 3 components: `simulator`, `kafkaconsumer` and `httpserver`. As it can be seen the diagram below, the `simulator` publishes a message (from its own namespace) to the `kafka` cluster (in the `ops` namespace). This stands for a `CREATE` request which is meant to store a random data in the `mysql` database (in the `ops` namespace). This is done via the `kafkaconsumer` which consumes the message from the `kafka` cluster and stores the data in the `mysql` database. Meanwhile, the `simulator` also performs `GET` and `DELETE` requests to the `httpserver` which then first goes to the `redis` cache and then queries against the `mysql` database.
+The current business logic is simple. Every team has 4 components: `simulator`, `kafkaconsumer` `httpserver` and `grpcserver`. As it can be seen the diagram below, the `simulator` publishes a message (from its own namespace) to the `kafka` cluster (in the `ops` namespace). This stands for a `CREATE` request which is meant to store a random data in the `redis` cache and the `mysql` database (in the `ops` namespace). This is done via the `kafkaconsumer` which consumes the message from the `kafka` cluster and stores the data in the `mysql` database. Meanwhile, the `simulator` also performs `GET` and `DELETE` requests to the `httpserver` which then first goes to the `redis` cache and then queries against the `mysql` database and also the `grpcserver` which then goes to the `redis`.
 
 ![Application Architecture](./media/application_architecture.png)
+
+To see each workflow in detail, refer to following docs:
+
+- [kafkaconsumer](/infra/helm/kafkaconsumer/README.md)
+- [grpcserver](/infra/helm/grpcserver/README.md)
+- [httpserver](/infra/helm/httpserver/README.md)
+- [latencymanager](/infra/helm/latencymanager/README.md)
 
 That being said, the telemetry data which is generated from the applications within the `<language>` namespaces are sent to the `otelcollectors` in the `ops` namespace which will send the data to your observability backend. This is depicted in the diagram below.
 
@@ -80,6 +87,7 @@ infra/
 
 - (commons library)
 - httpserver
+- grpcserver
 - kafkaconsumer
 - simulator
 
@@ -87,6 +95,7 @@ infra/
 
 - [cert-manager](/infra/helm/cert-manager)
 - [httpserver](/infra/helm/httpserver/)
+- [grpcserver](/infra/helm/grpcserver/)
 - [kafka](/infra/helm/kafka/)
 - [kafkaconsumer](/infra/helm/kafkaconsumer/)
 - [latencymanager](/infra/helm/latencymanager/)
