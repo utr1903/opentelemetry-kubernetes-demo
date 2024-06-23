@@ -1,39 +1,39 @@
-name: AKS stop cron job
+# name: AKS stop cron job
 
-on:
-  schedule:
-    - cron: "0 16 * * 1-5" # Run every weekday at 16:00
+# on:
+#   schedule:
+#     - cron: "0 16 * * 1-5" # Run every weekday at 16:00
 
-jobs:
-  aks_stop:
-    name: "Stop AKS"
-    runs-on: ubuntu-latest
+# jobs:
+#   aks_stop:
+#     name: "Stop AKS"
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        id: checkout_repo
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout repository
+#         id: checkout_repo
+#         uses: actions/checkout@v4
 
-      - name: Login to Azure
-        id: login_to_azure
-        run: |
-          az login \
-            --service-principal \
-            -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_APP_ID }} \
-            -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_SECRET }} \
-            --tenant ${{ secrets.AZURE_TENANT_ID }}
+#       - name: Login to Azure
+#         id: login_to_azure
+#         run: |
+#           az login \
+#             --service-principal \
+#             -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_APP_ID }} \
+#             -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_SECRET }} \
+#             --tenant ${{ secrets.AZURE_TENANT_ID }}
 
-      - name: Stop AKS
-        id: stop_aks
-        run: |
-          az aks stop \
-          --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
-          --resource-group "rg${{ secrets.PROJECT }}main${{ secrets.INSTANCE }}" \
-          --name "aks${{ secrets.PROJECT }}main${{ secrets.INSTANCE }}" \
-          --no-wait
+#       - name: Stop AKS
+#         id: stop_aks
+#         run: |
+#           az aks stop \
+#           --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+#           --resource-group "rg${{ secrets.PROJECT }}main${{ secrets.INSTANCE }}" \
+#           --name "aks${{ secrets.PROJECT }}main${{ secrets.INSTANCE }}" \
+#           --no-wait
 
-      - name: Logout of Azure
-        id: logout_from_azure
-        if: always()
-        run: |
-          az logout
+#       - name: Logout of Azure
+#         id: logout_from_azure
+#         if: always()
+#         run: |
+#           az logout
